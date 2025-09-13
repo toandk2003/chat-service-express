@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Express Socket.IO Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 200px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Express Socket.IO Demo</h1>
+    <button onclick="sendHello()">Gửi Hello Event</button>
+    <div id="messages"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messagesDiv = document.getElementById('messages');
+
+        // Khi kết nối thành công
+        socket.on('connect', () => {
+            addMessage('Đã kết nối đến server!');
+        });
+
+        // Lắng nghe response từ server
+        socket.on('response', (data) => {
+            addMessage('Server phản hồi: ' + data);
+        });
+
+        // Function gửi hello event
+        function sendHello() {
+            socket.emit('hello', { message: 'Hello từ client!' });
+            addMessage('Đã gửi hello event đến server');
+        }
+
+        // Function thêm message vào UI
+        function addMessage(message) {
+            const messageElement = document.createElement('div');
+            messageElement.innerHTML = `<strong>${new Date().toLocaleTimeString()}:</strong> ${message}`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
