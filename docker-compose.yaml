@@ -1,0 +1,205 @@
+networks:
+  mongodb_network:
+    driver: bridge
+
+services:
+  # Configuration config server replica
+  configs1:
+    container_name: configs1
+    hostname: configs1
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --configsvr --replSet configReplSet --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 1 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/configs1:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  configs2:
+    container_name: configs2
+    hostname: configs2
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --configsvr --replSet configReplSet --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 1 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/configs2:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  configs3:
+    container_name: configs3
+    hostname: configs3
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --configsvr --replSet configReplSet --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 1 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/configs3:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  # Shard1
+  shard1_node1:
+    container_name: shard1_node1
+    hostname: shard1_node1
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard1 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard1_node1:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  shard1_node2:
+    container_name: shard1_node2
+    hostname: shard1_node2
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard1 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard1_node2:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  shard1_node3:
+    container_name: shard1_node3
+    hostname: shard1_node3
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard1 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard1_node3:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+
+  # Shard2
+  shard2_node1:
+    container_name: shard2_node1
+    hostname: shard2_node1
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard2 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard2_node1:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  shard2_node2:
+    container_name: shard2_node2
+    hostname: shard2_node2
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard2 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard2_node2:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  shard2_node3:
+    container_name: shard2_node3
+    hostname: shard2_node3
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongod --shardsvr --replSet shard2 --port 27017 --dbpath /data/db --wiredTigerCacheSizeGB 12 --bind_ip_all
+    volumes:
+      - /var/lib/mongodb/shard2_node3:/data/db
+    networks:
+      - mongodb_network
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+    deploy:
+      resources:
+        limits:
+          memory: 2GB
+          cpus: '0.3'
+
+  # Mongos router
+  mongos:
+    container_name: mongos
+    hostname: mongos
+    image: mongo:8.0.4
+    pull_policy: missing
+    command: mongos --configdb configReplSet/configs1:27017,configs2:27017,configs3:27017 --bind_ip_all --port 27017
+    ports:
+      - 30000:27017
+    networks:
+      - mongodb_network
+#    deploy:
+#      resources:
+#        limits:
+#          memory: 2GB
+#          cpus: '0.5'
+    deploy:
+      resources:
+        limits:
+          memory: 4GB
+          cpus: '0.5'
+    depends_on:
+      - configs1
+      - configs2
+      - configs3
+      - shard1_node1
+      - shard1_node2
+      - shard1_node3
+      - shard2_node1
+      - shard2_node2
+      - shard2_node3
+    environment:
+      - GLIBC_TUNABLES=glibc.pthread.rseq=0
+
