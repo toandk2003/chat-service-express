@@ -1,4 +1,5 @@
 const testHandler = require('./testHandler');
+const socketAuthMiddleware = require('../middleware/socketAuth');
 
 
 // TOUCH IT WHEN YOU ADD NEW HANDLER
@@ -13,6 +14,8 @@ const HANDLERS = [
 
 // DON'T TOUCH
 const socketHandler = (io) => {
+    io.use(socketAuthMiddleware);
+
     io.on('connection', (socket) => {
         console.log('One user connected:', socket.id);
         socket.on('disconnect', () => {
@@ -27,6 +30,13 @@ const socketHandler = (io) => {
                 );
             }
         });
+    });
+
+    io.engine.on("connection_error", (err) => {
+        console.log('🚫 Connection error:', err.req);
+        console.log('🚫 Error code:', err.code);
+        console.log('🚫 Error message:', err.message);
+        console.log('🚫 Error context:', err.context);
     });
 };
 
