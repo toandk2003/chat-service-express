@@ -16,6 +16,10 @@ const ROLE = {
 };
 
 const UserSchema = new BaseSchema({
+  userId: {
+    type: Number,
+    require: true
+  },
   email: {
     type: String,
     required: true,
@@ -85,6 +89,7 @@ const UserSchema = new BaseSchema({
   },
   deletedAt: {
     type: Date,
+    default: null,
   },
   
   deleted: {
