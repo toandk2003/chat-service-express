@@ -1,6 +1,20 @@
 const mongoose = require('mongoose');
 const BaseSchema = require('./base/BaseSchema.js');
 
+const STATUS = Object.freeze({
+  READ: 'SENT',
+  DELIVERED: 'DELIVERED',
+  READ: 'READ'
+});
+
+const REACTION = Object.freeze({
+  LIKE: 'LIKE',
+  TYM: 'TYM',
+  UNLIKE: 'UNLIKE',
+  ANGRY: 'ANGRY',
+  CONFUSED: 'CONFUSED'
+});
+
 const MessageSchema = new BaseSchema({
   conversationId: { type: String, ref: 'conversations' },
   senderId: { type: String, ref: 'users' },
@@ -8,18 +22,26 @@ const MessageSchema = new BaseSchema({
     userId: { type: String, ref: 'users' },
     status: { 
       type: String, 
-      enum: ['SENT', 'DELIVERED', 'READ'], 
+      enum: Object.values(STATUS), 
     },
-    readAt: { type: Date }
+    readAt: { type: Date },
+    reaction: { 
+      type: String, 
+      enum: Object.values(REACTION), 
+    },
+    reactedAt: { type: Date }
   }],
   content: String,
-  createdAt: { type: Date, default: Date.now }
-}, { 
+}, 
+{ 
   collection: 'messages',
-  timestamps: true 
 });
 
 
 const Message = mongoose.model('messages', MessageSchema);
 
-module.exports = Message;
+module.exports = {
+  Message,
+  STATUS,
+  REACTION
+};

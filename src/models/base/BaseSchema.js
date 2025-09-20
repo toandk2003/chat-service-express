@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const snowflakeGenerator = require('../../utils/snowflake');
+const snowflakeGenerator = require('../../common/utils/snowflake');
 
 class BaseSchema extends mongoose.Schema {
   constructor(definition, options) {
@@ -8,6 +8,10 @@ class BaseSchema extends mongoose.Schema {
         _id: {
           type: String,
           default: () => snowflakeGenerator.generate()
+        },
+         deletedAt: {
+          type: Date,
+          default: null, // mặc định chưa xóa
         },
         ...definition
       },

@@ -2,18 +2,18 @@ const mongoose = require('mongoose');
 const BaseSchema = require('./base/BaseSchema.js');
 
 // Define enums
-const STATUS = {
+const STATUS = Object.freeze({
   NO_ONBOARDING: 'NO_ONBOARDING',
   INACTIVE: 'INACTIVE',
   ACTIVE: 'ACTIVE',
   LOCK: 'LOCK',
   BAN: 'BAN'
-};
+});
 
-const ROLE = {
+const ROLE = Object.freeze({
   USER: 'USER',
   ADMIN: 'ADMIN'
-};
+});
 
 const UserSchema = new BaseSchema({
   userId: {
@@ -101,12 +101,13 @@ const UserSchema = new BaseSchema({
     type: Number,
     default: 0
   },
-}, { 
-  collection: 'users',
-  timestamps: true 
+  conversationIds: [{ type: String, ref: 'conversations' }] // danh sách conversations
+}, 
+{ 
+  collection: 'users'
 });
 
 
 const User = mongoose.model('users', UserSchema);
 
-module.exports = User;
+module.exports = {User, STATUS, ROLE};

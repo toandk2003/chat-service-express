@@ -3,13 +3,14 @@ const BaseSchema = require('./base/BaseSchema.js');
 
 const ConversationSchema = new BaseSchema({
   name: String,
-  participants: [{ type: String, ref: 'users' }], // danh sách userId
+  participants: [{ type: String, ref: 'users' }], // danh sách user
   type: String,
-  createdAt: { type: Date, default: Date.now }
-
-}, { 
+  maxMember: Number,
+  avatar: String,
+  bucket: String,
+}, 
+{ 
   collection: 'conversations',
-  timestamps: true 
 });
 
 
