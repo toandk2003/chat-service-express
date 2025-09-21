@@ -6,7 +6,14 @@ const http = require("http");
 const socketIo = require("socket.io");
 const app = express();
 const server = http.createServer(app);
-global.io = socketIo(server);
+global.io = socketIo(server, {
+  cors: {
+    origin: "*", // Cho phép tất cả các origin
+    methods: ["GET", "POST"],
+    allowedHeaders: ["*"],
+    credentials: true,
+  },
+});
 const cors = require("cors");
 const apiAuthMiddleware = require("./src/middleware/apiAuth");
 const clientSocketHandler = require("./src/handlers/client-event");

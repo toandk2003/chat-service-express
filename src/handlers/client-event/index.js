@@ -1,5 +1,6 @@
 const testHandler = require("./testHandler");
 const socketAuthMiddleware = require("../../middleware/socketAuth");
+const joinRoom = require("../../common/utils/join-room");
 const { createAdapter } = require("@socket.io/redis-adapter");
 
 // TOUCH IT WHEN YOU ADD NEW HANDLER
@@ -8,12 +9,16 @@ const HANDLERS = [
 
   // Thêm vào array này khi có handler mới
 ];
+const ROOMS = [
+  // Thêm vào array này khi muon room mới
+  "test",
+];
 
 // DON'T TOUCH
 const clientSocketHandler = async (io, socketEventBus) => {
   console.log("Setting up Socket.IO handlers...");
   console.log("Redis URL = ", process.env.REDIS_URL);
-  
+
   io.use(socketAuthMiddleware);
   console.log("✅ Socket.IO auth middleware applied");
 
@@ -35,6 +40,12 @@ const clientSocketHandler = async (io, socketEventBus) => {
           }`
         );
       }
+    });
+
+    ROOMS.forEach((room) => {
+      const currentUser = socket.currentUser;
+      const specificRoom = `${room}_${currentUser.id}`;
+      joinRoom(socket, specificRoom);
     });
   });
 
