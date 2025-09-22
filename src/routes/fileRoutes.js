@@ -2,7 +2,6 @@ const express = require("express");
 const multer = require("multer");
 const uploadFileService = require("../services/uploadFileService");
 const S3_CONSTANTS = require("../common/constant/S3Constant");
-// const downloadFileService = require('../services/downloadFileService');
 
 const router = express.Router();
 
@@ -34,25 +33,5 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     )
   );
 });
-
-// // Download file endpoint
-// router.get('/download/:fileName', async (req, res) => {
-//     try {
-//         const { fileName } = req.params;
-//         const bucketName = req.query.bucketName || process.env.AWS_BUCKET_NAME;
-
-//         const result = await downloadFileService.downloadFile(fileName, bucketName);
-
-//         res.json({
-//             success: true,
-//             data: result
-//         });
-//     } catch (error) {
-//         res.status(400).json({
-//             success: false,
-//             error: error.message
-//         });
-//     }
-// });
 
 module.exports = router;

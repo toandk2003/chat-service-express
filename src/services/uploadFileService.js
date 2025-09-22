@@ -1,8 +1,4 @@
-const {
-  GetObjectCommand,
-  HeadObjectCommand,
-  PutObjectCommand,
-} = require("@aws-sdk/client-s3");
+const { PutObjectCommand } = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
