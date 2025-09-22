@@ -1,10 +1,15 @@
-const { GetObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  GetObjectCommand,
+  HeadObjectCommand,
+  PutObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
-const { createPresignedPost } = require("@aws-sdk/s3-presigned-post");
 const { v4: uuidv4 } = require("uuid");
 const path = require("path");
 const s3Config = require("../config/S3Config");
 const S3_CONSTANTS = require("../common/constant/S3Constant");
+const { User } = require("../models/User");
+const Attachment = require("../models/Attachment");
 
 class UploadFileService {
   constructor() {
@@ -14,13 +19,18 @@ class UploadFileService {
   async uploadFile(fileData, bucketName, currentUser) {
     try {
       // Validate input
-      // const limitResource = await this.validate(currentUser, fileData);
+      await this.validate(currentUser, fileData);
 
       // Generate presigned URL and save attachment
-      return await this.save(currentUser, null, fileData, bucketName);
+      return await this.save(currentUser, fileData, bucketName);
     } catch (error) {
       console.error("Error in uploadFile:", error.message);
-      throw error;
+
+      return {
+        success: false,
+        status: 400,
+        message: error.message,
+      };
     }
   }
 
@@ -62,28 +72,47 @@ class UploadFileService {
       );
     }
 
-    // Get user's limit resource (này bạn cần implement theo database của mình)
-    const limitResource = await this.getLimitResource(userId);
+    const user = await User.findOne({ userId });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const {
+      maxLimitResourceMedia,
+      currentUsageResourceMedia,
+      lastUpdateLimitResourceTime,
+    } = user;
+
+    console.log("user limit resource:", {
+      maxLimitResourceMedia,
+      currentUsageResourceMedia,
+      lastUpdateLimitResourceTime,
+    });
 
     // Reset resource usage if new day
     const now = new Date();
     const today = now.toISOString().split("T")[0];
-    const lastUpdate = new Date(limitResource.updatedAt)
+    const lastUpdate = new Date(lastUpdateLimitResourceTime)
       .toISOString()
       .split("T")[0];
 
     if (today > lastUpdate) {
-      limitResource.currentUsage = 0;
+      user.currentUsageResourceMedia = 0;
+      user.lastUpdateLimitResourceTime = now;
+      await user.save();
     }
 
     // Check if exceeds limit
-    if (limitResource.currentUsage + size > S3_CONSTANTS.MAX_LIMIT_RESOURCE) {
+    if (
+      user.currentUsageResourceMedia + size >
+      S3_CONSTANTS.MAX_LIMIT_RESOURCE
+    ) {
       throw new Error("Resource usage limit exceeded");
     }
 
-    return limitResource;
+    console.log("Validation passed for file upload");
   }
-  async save(currentUser, limitResource, fileData, bucketName) {
+
+  async save(currentUser, fileData, bucketName) {
     const { originalname, size, mimetype } = fileData;
 
     // Generate unique filename
@@ -96,95 +125,67 @@ class UploadFileService {
     console.log("contentType:", mimetype);
     console.log("fileSize:", size);
 
-    // Create presigned POST URL (more secure for uploads)
-    const expiration = new Date(
-      Date.now() + S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME
-    );
-
-    const presignedPost = await createPresignedPost(this.s3Client, {
+    // Create PutObjectCommand
+    const putObjectCommand = new PutObjectCommand({
       Bucket: bucketName,
       Key: fileNameInS3,
-      Expires: Math.floor(
-        S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000
-      ),
-      Fields: {
-        "Content-Type": mimetype,
-        "Content-Length": size.toString(),
+      ContentType: mimetype,
+      ContentLength: size,
+      // Các metadata khác nếu cần
+      Metadata: {
+        "original-filename": originalname,
+        "uploaded-by": currentUser.id.toString(),
+        "upload-timestamp": timestamp.toString(),
       },
-      Conditions: [
-        ["content-length-range", size, size], // Exact size match
-        ["eq", "$Content-Type", mimetype],
-      ],
     });
 
-    console.log("presignedPost:", presignedPost);
+    // Generate presigned PUT URL
+    const presignedUrl = await getSignedUrl(this.s3Client, putObjectCommand, {
+      expiresIn: Math.floor(
+        S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000
+      ), // seconds
+    });
+
+    console.log("presignedUrl:", presignedUrl);
 
     // Save attachment to database (bạn cần implement này)
-    // const attachment = await this.saveAttachment({
-    //   originalFileName: originalname,
-    //   s3BucketName: bucketName,
-    //   fileNameInS3: fileNameInS3,
-    //   fileSize: size,
-    //   contentType: mimetype,
-    //   status: "WAITING_CONFIRM",
-    //   expireAt: new Date(
-    //     Date.now() + S3_CONSTANTS.EXPIRE_TIME_ATTACHMENT * 24 * 60 * 60 * 1000
-    //   ),
-    //   createdBy: currentUser.id,
-    // });
+    const attachment = await Attachment.create({
+      originalFileName: originalname,
+      fileSize: size,
+      bucket: bucketName,
+      contentType: mimetype,
+      key: fileNameInS3,
+      status: "WAITING_CONFIRM",
+      createdAt: new Date(),
+      uploadedAt: new Date(),
+      deletedAt: null,
+    });
 
     // // Update limit resource
-    // limitResource.currentUsage += size;
-    // await this.updateLimitResource(limitResource);
+    const user = await User.findOne({ userId: currentUser.id });
 
-    // return {
-    //   attachmentId: attachment.id,
-    //   uploadUrl: presignedPost.url,
-    //   fields: presignedPost.fields,
-    //   originalFileName: originalname,
-    //   fileNameInS3: fileNameInS3,
-    //   contentType: mimetype,
-    //   size: `${(size / (1024 * 1024)).toFixed(2)} MB`,
-    //   method: "POST",
-    //   expiresIn: `${Math.floor(
-    //     S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000 / 60
-    //   )} minutes`,
-    // };
+    user.currentUsageResourceMedia += size;
+    user.lastUpdateLimitResourceTime = new Date();
+    await user.save();
+
     return {
-      uploadUrl: presignedPost.url,
-      originalFileName: originalname,
-      fileNameInS3: fileNameInS3,
-      contentType: mimetype,
-      size: `${(size / (1024 * 1024)).toFixed(2)} MB`,
-      method: "POST",
-      expiresIn: `${Math.floor(
-        S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000 / 60
-      )} minutes`,
+      success: true,
+      status: 200,
+      message:
+        "Presigned URL generated successfully, using it to upload file for chat",
+      data: {
+        id: attachment._id,
+        uploadUrl: presignedUrl,
+        originalFileName: originalname,
+        fileNameInS3: fileNameInS3,
+        contentType: mimetype,
+        size: `${(size / (1024 * 1024)).toFixed(2)} MB`,
+        method: "PUT",
+        expiresIn: `${Math.floor(
+          S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000 / 60
+        )} minutes`,
+      },
     };
-  }
-
-  // Placeholder methods - implement theo database của bạn
-  async getLimitResource(userId) {
-    // Implement database query to get user's limit resource
-    return {
-      id: 1,
-      userId: userId,
-      currentUsage: 0,
-      updatedAt: new Date(),
-    };
-  }
-
-  async saveAttachment(attachmentData) {
-    // Implement database save for attachment
-    return {
-      id: Date.now(), // Mock ID
-      ...attachmentData,
-    };
-  }
-
-  async updateLimitResource(limitResource) {
-    // Implement database update for limit resource
-    console.log("Updated limit resource:", limitResource);
   }
 }
 

@@ -5,7 +5,11 @@ const ConversationSchema = new BaseSchema(
   {
     name: String,
     participants: [{ type: String, ref: "users" }], // danh sách user
-    type: String,
+    type: {
+      type: String,
+      enum: ["private", "bot"],
+      default: "bot",
+    },
     maxMember: Number,
     avatar: String,
     bucket: String,

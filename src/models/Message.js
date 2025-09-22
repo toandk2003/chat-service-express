@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const BaseSchema = require("./base/BaseSchema.js");
+const { create } = require("../controller/UserController.js");
 
 const STATUS = Object.freeze({
   READ: "SENT",
@@ -35,6 +36,12 @@ const MessageSchema = new BaseSchema(
       },
     ],
     content: String,
+    type: {
+      type: String,
+      enum: ["text", "image", "video", "file"],
+      default: "text",
+    },
+    attachments: [{ type: String, ref: "attachments" }],
   },
   {
     collection: "messages",

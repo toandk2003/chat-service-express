@@ -25,11 +25,14 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
   console.log("Original file name:", originalName);
   console.log("File size (bytes):", fileSize);
-  const result = await uploadFileService.uploadFile(req.file, S3_CONSTANTS.CHAT_MEDIA_BUCKET, req.currentUser);
 
-  res.json({
-    success: true,
-  });
+  res.json(
+    await uploadFileService.uploadFile(
+      req.file,
+      S3_CONSTANTS.CHAT_MEDIA_BUCKET,
+      req.currentUser
+    )
+  );
 });
 
 // // Download file endpoint
