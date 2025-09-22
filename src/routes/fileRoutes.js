@@ -15,7 +15,7 @@ const upload = multer({
 });
 
 // Upload file endpoint
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/chat/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
