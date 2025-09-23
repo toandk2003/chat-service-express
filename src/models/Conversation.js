@@ -3,16 +3,28 @@ const BaseSchema = require("./base/BaseSchema.js");
 
 const ConversationSchema = new BaseSchema(
   {
-    name: String,
-    participants: [{ type: String, ref: "users" }], // danh sách user
+    name: { type: String, default: null },
+    participants: [{ type: String, ref: "users" }],
     type: {
       type: String,
-      enum: ["private", "bot"],
-      default: "bot",
+      enum: ["private", "group", "bot"],
+      default: "private",
     },
-    maxMember: Number,
-    avatar: String,
-    bucket: String,
+    leader: { type: String, ref: "users", default: null },
+    maxMember: { type: Number, default: 3 },
+    avatar: {
+      type: String,
+      default: null,
+    },
+    bucket: {
+      type: String,
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
+    },
   },
   {
     collection: "conversations",
