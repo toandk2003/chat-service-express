@@ -41,7 +41,7 @@ const MessageSchema = new BaseSchema(
       enum: ["text", "image", "video", "file"],
       default: "text",
     },
-    attachments: [{ type: String, ref: "attachments" }],
+    attachments: [{ type: String, ref: "attachments", default: [] }],
   },
   {
     collection: "messages",

@@ -112,7 +112,7 @@ const UserSchema = new BaseSchema(
       type: Number,
       default: 0,
     },
-    conversationIds: [{ type: String, ref: "conversations" }], // danh sách conversations
+    conversations: [{ type: String, ref: "conversations", default: [] }], // danh sách conversations
   },
   {
     collection: "users",
