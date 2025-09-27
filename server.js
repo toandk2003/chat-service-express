@@ -11,9 +11,7 @@ const apiAuthMiddleware = require("./src/middleware/apiAuth");
 const clientSocketHandler = require("./src/handlers/client-event");
 const SocketEventBus = require("./src/handlers/socket-event-bus");
 const connectDB = require("./src/config/database");
-const userController = require("./src/routes/UserRoutes.js");
 const fileRoutes = require("./src/routes/fileRoutes");
-const synchronizeRoutes = require("./src/routes/SynchronizeRoutes");
 const syncConsumer = require('./src/handlers/sync-event')
 
 global.io = socketIo(server, {
@@ -54,10 +52,7 @@ const initServer = async () => {
     await clientSocketHandler(io, socketEventBus);
 
     // Thiết lập các route
-    app.use("/", userController);
     app.use("/", fileRoutes);
-    app.use("/", synchronizeRoutes);
-
     console.log("✅ Routes set up successfully");
 
     // Khởi động sync consumer

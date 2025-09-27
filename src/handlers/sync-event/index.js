@@ -1,11 +1,12 @@
 // services/notificationConsumer.js
 const { createClient } = require("redis");
+const sync = require("./sync");
 
 class SyncConsumer {
   constructor() {
-    this.streamName = process.env.REDIS_STREAM_NAME;
-    this.groupName = process.env.REDIS_CONSUMER_GROUP;
-    this.consumerName = process.env.REDIS_CONSUMER_NAME;
+    this.streamName = process.env.SYNC_STREAM;
+    this.groupName = process.env.SYNC_GROUP;
+    this.consumerName = process.env.SYNC_CONSUMER;
     this.redisClient = null;
   }
 
@@ -63,10 +64,11 @@ class SyncConsumer {
           MKSTREAM: true, // tạo stream nếu chưa tồn tại
         }
       );
-
+      console.log(`Current stream: ${this.streamName} `);
       console.log(`Created consumer group: ${this.groupName}`);
     } catch (error) {
       if (error.message.includes("BUSYGROUP")) {
+        console.log(`Current stream: ${this.streamName} `);
         console.log(`Consumer group already exists: ${this.groupName}`);
       } else {
         console.error("Error creating consumer group:", error);
@@ -80,8 +82,7 @@ class SyncConsumer {
 
     while (true) {
       try {
-        // XREADGROUP GROUP groupName consumerName COUNT 10 BLOCK 1000 STREAMS streamName >
-        const messages = await this.redisClient.xReadGroup(
+        const messagesInPendingEntriesList = await this.redisClient.xReadGroup(
           this.groupName, // group name
           this.consumerName, // consumer name
           [
@@ -92,18 +93,36 @@ class SyncConsumer {
           ],
           {
             COUNT: 10, // đọc tối đa 10 messages
+            BLOCK: 5000, // block 1 giây nếu không có message
+          }
+        );
+
+        if (messagesInPendingEntriesList && messagesInPendingEntriesList.length > 0) {
+          await this.processMessages(messagesInPendingEntriesList);
+        }
+
+        const messagesLatest = await this.redisClient.xReadGroup(
+          this.groupName, // group name
+          this.consumerName, // consumer name
+          [
+            {
+              key: this.streamName, // stream name
+              id: "0", // read new messages
+            },
+          ],
+          {
+            COUNT: 10, // đọc tối đa 10 messages
             BLOCK: 1000, // block 1 giây nếu không có message
           }
         );
 
-        if (messages && messages.length > 0) {
-          await this.processMessages(messages);
+        if (messagesLatest && messagesLatest.length > 0) {
+          await this.processMessages(messagesLatest);
+        } else {
+          break;
         }
       } catch (error) {
         console.error("Error reading from stream:", error);
-
-        // Đợi trước khi retry
-        await this.sleep(2000);
       }
     }
   }
@@ -124,13 +143,17 @@ class SyncConsumer {
   }
 
   async processMessage(message) {
+    console.log('\n-----------------------------new message---------------------------')
     console.log(
-      `Processing message: ${message.id} sent at ${message.message.sentAt}`
+      `✅ Processing message: ${message.id} sent at ${message.message.sentAt}`
     );
-    const data = JSON.parse(message.message.data);
+    const data = JSON.parse(JSON.parse(message.message.data));
 
-    console.log("✅ Handle Event : ", data);
+    console.log("Handle Event : ", data);
+    
+    await sync(data);
   }
+
   async acknowledgeMessage(messageId) {
     try {
       // XACK stream group messageId
@@ -139,10 +162,6 @@ class SyncConsumer {
     } catch (error) {
       console.error(`Failed to acknowledge message ${messageId}:`, error);
     }
-  }
-
-  sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
 
