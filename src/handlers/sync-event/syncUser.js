@@ -4,7 +4,7 @@ const syncUser = async (data) => {
   console.log("syncing user.....");
 
   const user = await User.findOne({
-    userId: data.userId,
+    email: data.email,
   });
 
   if (user) {

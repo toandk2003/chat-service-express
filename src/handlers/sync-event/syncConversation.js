@@ -1,49 +1,71 @@
 const withTransactionThrow = require("../../common/utils/withTransactionThrow");
 const Conversation = require("../../models/Conversation");
 const { User } = require("../../models/User");
+const UserConversation = require("../../models/UserConversation");
 
 const syncConversation = async (data) => {
   console.log("syncing conversation.....");
   return await withTransactionThrow(async (session, data) => {
     console.log("syncing conversation.....");
+    const firstUserEmail = data.participants[0];
+    const secondUserEmail = data.participants[1];
 
-    const conversationExists = await Conversation.findOne({
-      type: "private",
-      $or: [
-        { name: data.participants[0] + "-" + data.participants[1] },
-        { name: data.participants[1] + "-" + data.participants[0] },
-      ],
+    const firstUser = User.findOne({ email: firstUserEmail });
+    const secondUser = User.findOne({ email: secondUserEmail });
+    if (!firstUser)
+      throw new Error("NOT FOUND USER WITH EMAIL: " + firstUserEmail);
+    if (!secondUser)
+      throw new Error("NOT FOUND USER WITH EMAIL: " + secondUserEmail);
+
+    const conversationFirstUserRegist = await UserConversation.find({
+      userId: firstUser._id,
       status: "active",
     });
 
-    if (conversationExists) {
-      console.log("Conversation already exists:", conversationExists);
+    const conversationSecondUserRegist = await UserConversation.find({
+      userId: secondUser._id,
+      status: "active",
+    });
+
+    const privateConversationOfFirstUser = conversationFirstUserRegist
+      .filter(
+        async (conversationId) =>
+          (await Conversation.findById(conversationId)).type === "private"
+      )
+      .map((conversation) => conversation._id);
+
+    const privateConversationOfSecondUser = conversationSecondUserRegist
+      .filter(
+        async (conversationId) =>
+          (await Conversation.findById(conversationId)).type === "private"
+      )
+      .map((conversation) => conversation._id);
+
+    // Dùng Set để tìm phần tử chung nhanh
+    const setSecond = new Set(privateConversationOfSecondUser);
+    const commonPrivateConversation = privateConversationOfFirstUser.filter(
+      (id) => setSecond.has(id)
+    );
+
+    if (commonPrivateConversation.length > 0) {
+      console.log(
+        "Hai user có chung private conversation:",
+        commonPrivateConversation
+      );
       return;
     }
 
-    const conversation = (
-      await Conversation.create(
-        [
-          {
-            ...data,
-            name: data.participants[0] + "-" + data.participants[1],
-          },
-        ],
-        { session }
-      )
-    )[0];
+    const [conversation] = await Conversation.insertMany([{}], { session });
 
     console.log(JSON.stringify(conversation, null, 2));
-    const user0 = await User.findOne({ userId: data.participants[0] });
-    const user1 = await User.findOne({ userId: data.participants[1] });
 
-    user0.conversations = [];
-    user1.conversations = [];
-
-    user0.conversations.push(conversation._id);
-    user1.conversations.push(conversation._id);
-    await user0.save({ session });
-    await user1.save({ session });
+    await UserConversation.insertMany(
+      [
+        { userId: firstUser._id_, conversationId: conversation._id },
+        { userId: secondUser._id, conversationId: conversation._id },
+      ],
+      { session }
+    );
   }, data);
 };
 

@@ -12,7 +12,8 @@ const clientSocketHandler = require("./src/handlers/client-event");
 const SocketEventBus = require("./src/handlers/socket-event-bus");
 const connectDB = require("./src/config/database");
 const fileRoutes = require("./src/routes/fileRoutes");
-const syncConsumer = require('./src/handlers/sync-event')
+const syncConsumer = require("./src/handlers/sync-event");
+const conversationRoutes = require("./src/routes/conversationRoutes");
 
 global.io = socketIo(server, {
   cors: {
@@ -53,6 +54,8 @@ const initServer = async () => {
 
     // Thiết lập các route
     app.use("/", fileRoutes);
+    app.use("/", conversationRoutes);
+
     console.log("✅ Routes set up successfully");
 
     // Khởi động sync consumer

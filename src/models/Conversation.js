@@ -4,13 +4,16 @@ const BaseSchema = require("./base/BaseSchema.js");
 const ConversationSchema = new BaseSchema(
   {
     name: { type: String, default: null },
-    participants: [{ type: String, ref: "users" }],
     type: {
       type: String,
       enum: ["private", "group", "bot"],
       default: "private",
     },
-    leader: { type: String, ref: "users", default: null },
+    leaderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "users",
+      default: null,
+    },
     maxMember: { type: Number, default: 3 },
     avatar: {
       type: String,

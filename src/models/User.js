@@ -18,10 +18,6 @@ const ROLE = Object.freeze({
 
 const UserSchema = new BaseSchema(
   {
-    userId: {
-      type: Number,
-      require: true,
-    },
     email: {
       type: String,
       required: true,
@@ -112,13 +108,12 @@ const UserSchema = new BaseSchema(
       type: Number,
       default: 0,
     },
-    conversations: [{ type: String, ref: "conversations", default: [] }], // danh sách conversations
   },
   {
     collection: "users",
   }
 );
-
+UserSchema.index({ userId: 1 });
 const User = mongoose.model("users", UserSchema);
 
 module.exports = { User, STATUS, ROLE };

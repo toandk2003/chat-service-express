@@ -18,15 +18,19 @@ const REACTION = Object.freeze({
 
 const MessageSchema = new BaseSchema(
   {
-    conversationId: { type: String, ref: "conversations" },
-    senderId: { type: String, ref: "users" },
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "conversations",
+    },
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     recipients: [
       {
-        userId: { type: String, ref: "users" },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
         status: {
           type: String,
           enum: Object.values(STATUS),
         },
+        deliveredAt: { type: Date },
         readAt: { type: Date },
         reaction: {
           type: String,
@@ -36,12 +40,15 @@ const MessageSchema = new BaseSchema(
       },
     ],
     content: String,
+    orderNumber: Number,
     type: {
       type: String,
       enum: ["text", "image", "video", "file"],
       default: "text",
     },
-    attachments: [{ type: String, ref: "attachments", default: [] }],
+    attachmentIds: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "attachments", default: [] },
+    ],
   },
   {
     collection: "messages",
