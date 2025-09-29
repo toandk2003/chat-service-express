@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const BaseSchema = require("./base/BaseSchema.js");
-const { create } = require("../controller/UserController.js");
 
 const STATUS = Object.freeze({
   READ: "SENT",

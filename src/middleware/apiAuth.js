@@ -22,7 +22,7 @@ const apiAuthMiddleware = (req, res, next) => {
        
         // Không có token
         if (!token) {
-            console.log('❌ No token provided for API request');
+            // console.log('❌ No token provided for API request');
             return res.status(401).json({
                 success: false,
                 message: 'Authentication error: No token provided',

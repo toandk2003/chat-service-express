@@ -14,7 +14,7 @@ const ConversationSchema = new BaseSchema(
       ref: "users",
       default: null,
     },
-    maxMember: { type: Number, default: 3 },
+    maxMember: { type: Number, default: 2 },
     avatar: {
       type: String,
       default: null,

@@ -10,8 +10,9 @@ const syncConversation = async (data) => {
     const firstUserEmail = data.participants[0];
     const secondUserEmail = data.participants[1];
 
-    const firstUser = User.findOne({ email: firstUserEmail });
-    const secondUser = User.findOne({ email: secondUserEmail });
+    const firstUser = await User.findOne({ email: firstUserEmail });
+    const secondUser = await User.findOne({ email: secondUserEmail });
+
     if (!firstUser)
       throw new Error("NOT FOUND USER WITH EMAIL: " + firstUserEmail);
     if (!secondUser)
@@ -28,6 +29,7 @@ const syncConversation = async (data) => {
     });
 
     const privateConversationOfFirstUser = conversationFirstUserRegist
+      .map((userConversation) => userConversation.conversationId)
       .filter(
         async (conversationId) =>
           (await Conversation.findById(conversationId)).type === "private"
@@ -35,6 +37,7 @@ const syncConversation = async (data) => {
       .map((conversation) => conversation._id);
 
     const privateConversationOfSecondUser = conversationSecondUserRegist
+      .map((userConversation) => userConversation.conversationId)
       .filter(
         async (conversationId) =>
           (await Conversation.findById(conversationId)).type === "private"
@@ -61,7 +64,7 @@ const syncConversation = async (data) => {
 
     await UserConversation.insertMany(
       [
-        { userId: firstUser._id_, conversationId: conversation._id },
+        { userId: firstUser._id, conversationId: conversation._id },
         { userId: secondUser._id, conversationId: conversation._id },
       ],
       { session }
