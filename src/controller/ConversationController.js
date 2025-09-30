@@ -5,6 +5,7 @@ const queryDocument = require("../common/utils/queryDocument");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const Conversation = require("../models/Conversation");
 const { Message } = require("../models/Message");
+const ConversationName = require("../models/ConversationName");
 
 const conversationController = {
   getList: async (req, res) => {
@@ -25,6 +26,14 @@ const conversationController = {
         { conversationId: secondConv._id },
       ]);
 
+      if ((await ConversationName.find({})).length === 0) {
+        await ConversationName.insertMany([
+          { conversationId: firstConv._id, name: "abc", type: "private" },
+          { conversationId: firstConv._id, name: "def", type: "private" },
+          { conversationId: secondConv._id, name: "groupName", type: "group" },
+          // { conversationId: firstConv._id, name: "botName", type: "bot" },
+        ]);
+      }
       console.log("user: ", user);
       console.log("avoidConversationIds: ", avoidConversationIds);
       const userId = user._id;
@@ -66,18 +75,7 @@ const conversationController = {
           },
         },
         // Stage 5: Lọc theo tên nếu có
-        ...(name
-          ? [
-              {
-                $match: {
-                  "conversation.name": {
-                    $regex: name.trim(),
-                    $options: "i",
-                  },
-                },
-              },
-            ]
-          : []),
+
         {
           $lookup: {
             from: "messages",
@@ -97,17 +95,65 @@ const conversationController = {
             as: "lastMessage",
           },
         },
+        {
+          $lookup: {
+            from: "conversation_names",
+            let: { conversationId: "$conversationId", userId },
+            pipeline: [
+              // Match dựa trên conversationId
+              {
+                $match: {
+                  $expr: {
+                    $eq: ["$conversationId", "$$conversationId"],
+                  },
+                },
+              },
+              // Lọc theo loại conversation và điều kiện về refId
+              {
+                $match: {
+                  $expr: {
+                    $or: [
+                      // Trường hợp 1: Nếu type là 'private', chỉ lấy những tên với refId khác với userId
+                      {
+                        $and: [
+                          { $eq: ["$type", "private"] },
+                          { $ne: ["$refId", "$$userId"] },
+                        ],
+                      },
+                      // Trường hợp 2: Nếu type là 'group' hoặc 'bot', lấy tất cả
+                      { $in: ["$type", ["group", "bot"]] },
+                    ],
+                  },
+                },
+              },
+              // Nếu có điều kiện tìm kiếm theo name
+              ...(name
+                ? [
+                    {
+                      $match: {
+                        name: {
+                          $regex: `.*${name.trim()}.*`,
+                          $options: "i",
+                        },
+                      },
+                    },
+                  ]
+                : []),
+            ],
+            as: "conversationNames",
+          },
+        },
 
-        {
-          $addFields: {
-            "conversation.messages": "$messages",
-          },
-        },
-        {
-          $project: {
-            messages: 0,
-          },
-        },
+        ...(name
+          ? [
+              {
+                $match: {
+                  conversationNames: { $ne: [] }, // Chỉ giữ lại những document mà mảng conversationNames không rỗng
+                },
+              },
+            ]
+          : []),
+
         // Stage 7: Sắp xếp theo thời gian cập nhật mới nhất
         {
           $sort: { updatedAt: -1 },

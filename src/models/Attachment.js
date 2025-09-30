@@ -13,9 +13,6 @@ const AttachmentSchema = new BaseSchema(
       enum: ["CONFIRMED", "WAITING_CONFIRM", "DELETED"],
       default: "WAITING_CONFIRM",
     },
-    createdAt: Date,
-    uploadedAt: Date,
-    deletedAt: Date,
   },
   {
     collection: "attachments",

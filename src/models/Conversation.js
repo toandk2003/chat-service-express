@@ -3,7 +3,6 @@ const BaseSchema = require("./base/BaseSchema.js");
 
 const ConversationSchema = new BaseSchema(
   {
-    name: { type: String, default: null },
     type: {
       type: String,
       enum: ["private", "group", "bot"],
