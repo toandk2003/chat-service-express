@@ -5,7 +5,6 @@ const queryDocument = require("../common/utils/queryDocument");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const Conversation = require("../models/Conversation");
 const { Message, STATUS, REACTION } = require("../models/Message");
-const ConversationName = require("../models/ConversationView");
 
 const conversationController = {
   getList: async (req, res) => {
@@ -52,6 +51,7 @@ const conversationController = {
 
       console.log("user: ", user);
       console.log("avoidConversationIds: ", avoidConversationIds);
+
       const userId = user._id;
       const pipeline = [
         // Stage 1: Tìm các cuộc hội thoại của user hiện tại
@@ -170,9 +170,20 @@ const conversationController = {
             ]
           : []),
 
-        // Stage 7: Sắp xếp theo thời gian cập nhật mới nhất
         {
-          $sort: { updatedAt: -1 },
+          $addFields: {
+            lastMessageDate: {
+              $cond: {
+                if: { $gt: [{ $size: "$lastMessage" }, 0] }, // Kiểm tra nếu có tin nhắn
+                then: { $arrayElemAt: ["$lastMessage.createdAt", 0] }, // Lấy createdAt của tin nhắn đầu tiên trong mảng
+                else: "$conversation.createdAt", // Nếu không có tin nhắn, dùng thời gian tạo conversation
+              },
+            },
+          },
+        },
+
+        {
+          $sort: { lastMessageDate: -1 },
         },
       ];
 
