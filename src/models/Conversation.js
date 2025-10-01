@@ -14,14 +14,14 @@ const ConversationSchema = new BaseSchema(
       default: null,
     },
     maxMember: { type: Number, default: 2 },
-    avatar: {
-      type: String,
-      default: null,
-    },
-    bucket: {
-      type: String,
-      default: null,
-    },
+    participants: [
+      {
+        userId: mongoose.Schema.Types.ObjectId,
+        lastReadOffset: mongoose.Schema.Types.ObjectId,
+        skipUntilOffset: mongoose.Schema.Types.ObjectId,
+      },
+    ],
+    currentMember: { type: Number, default: 0 },
     status: {
       type: String,
       enum: ["active", "inactive"],

@@ -1,5 +1,6 @@
 const withTransactionThrow = require("../../common/utils/withTransactionThrow");
 const Conversation = require("../../models/Conversation");
+const ConversationView = require("../../models/ConversationView");
 const { User } = require("../../models/User");
 const UserConversation = require("../../models/UserConversation");
 
@@ -59,8 +60,29 @@ const syncConversation = async (data) => {
     }
 
     const [conversation] = await Conversation.insertMany([{}], { session });
+    const [firstConversationView, secondConversationView] =
+      await ConversationView.insertMany(
+        [
+          {
+            conversationId: conversation._id,
+            name: firstUser.fullName,
+            refId: firstUser._id,
+            avatar: firstUser.avatar,
+            bucket: firstUser.bucket,
+          },
+          {
+            conversationId: conversation._id,
+            name: secondUser.fullName,
+            refId: secondUser._id,
+            avatar: secondUser.avatar,
+            bucket: secondUser.bucket,
+          },
+        ],
+        { session }
+      );
 
-    console.log(JSON.stringify(conversation, null, 2));
+    console.log(JSON.stringify(firstConversationView, null, 2));
+    console.log(JSON.stringify(secondConversationView, null, 2));
 
     await UserConversation.insertMany(
       [

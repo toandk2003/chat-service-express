@@ -34,12 +34,18 @@ const MessageSchema = new BaseSchema(
         reaction: {
           type: String,
           enum: Object.values(REACTION),
+          default: null,
         },
         reactedAt: { type: Date },
       },
     ],
+    reaction: {
+      type: String,
+      enum: Object.values(REACTION),
+      default: null,
+    },
+    reactedAt: { type: Date },
     content: String,
-    orderNumber: Number,
     type: {
       type: String,
       enum: ["text", "image", "video", "file"],

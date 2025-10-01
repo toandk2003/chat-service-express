@@ -4,8 +4,8 @@ const countTotal = require("../common/utils/countTotal");
 const queryDocument = require("../common/utils/queryDocument");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const Conversation = require("../models/Conversation");
-const { Message } = require("../models/Message");
-const ConversationName = require("../models/ConversationName");
+const { Message, STATUS, REACTION } = require("../models/Message");
+const ConversationName = require("../models/ConversationView");
 
 const conversationController = {
   getList: async (req, res) => {
@@ -17,23 +17,39 @@ const conversationController = {
 
       const user = await User.findOne({ email, status: "ACTIVE" });
 
-      const conv = await Conversation.find();
-      const firstConv = conv[0];
-      const secondConv = conv[1];
+      const conv = await Conversation.findOne();
+
+      const fakeUser0 = await User.findOne({
+        email: "fakeUser0@gmail.com",
+        status: "ACTIVE",
+      });
+
+      const fakeUser16 = await User.findOne({
+        email: "fakeUser16@gmail.com",
+        status: "ACTIVE",
+      });
 
       await Message.insertMany([
-        { conversationId: firstConv._id },
-        { conversationId: secondConv._id },
+        {
+          conversationId: conv._id,
+          senderId: fakeUser0._id,
+          recipients: [
+            {
+              userId: fakeUser16._id,
+              status: STATUS.DELIVERED,
+              deliveredAt: new Date(),
+              readAt: new Date(),
+              reaction: REACTION.ANGRY,
+              reactedAt: new Date(),
+            },
+          ],
+          reaction: REACTION.LIKE,
+          reactedAt: new Date(),
+          content: "content",
+          type: "text",
+        },
       ]);
 
-      if ((await ConversationName.find({})).length === 0) {
-        await ConversationName.insertMany([
-          { conversationId: firstConv._id, name: "abc", type: "private" },
-          { conversationId: firstConv._id, name: "def", type: "private" },
-          { conversationId: secondConv._id, name: "groupName", type: "group" },
-          // { conversationId: firstConv._id, name: "botName", type: "bot" },
-        ]);
-      }
       console.log("user: ", user);
       console.log("avoidConversationIds: ", avoidConversationIds);
       const userId = user._id;
@@ -97,7 +113,7 @@ const conversationController = {
         },
         {
           $lookup: {
-            from: "conversation_names",
+            from: "conversation_views",
             let: { conversationId: "$conversationId", userId },
             pipeline: [
               // Match dựa trên conversationId
@@ -140,7 +156,7 @@ const conversationController = {
                   ]
                 : []),
             ],
-            as: "conversationNames",
+            as: "conversationViews",
           },
         },
 
@@ -148,7 +164,7 @@ const conversationController = {
           ? [
               {
                 $match: {
-                  conversationNames: { $ne: [] }, // Chỉ giữ lại những document mà mảng conversationNames không rỗng
+                  conversationViews: { $ne: [] }, // Chỉ giữ lại những document mà mảng conversationNames không rỗng
                 },
               },
             ]
@@ -163,7 +179,7 @@ const conversationController = {
       // Thực hiện đếm tổng số bản ghi
       const total = await countTotal(UserConversation, pipeline);
 
-      // Thêm skip và limit vào pipeline để phân trang
+      // Thêm skip và limit vào pipeline đuser_conversationsể phân trang
       const paginatedResults = await queryDocument(
         UserConversation,
         pipeline,
