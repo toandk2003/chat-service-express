@@ -59,7 +59,15 @@ const syncConversation = async (data) => {
       return;
     }
 
-    const [conversation] = await Conversation.insertMany([{}], { session });
+    const [conversation] = await Conversation.insertMany(
+      [
+        {
+          participants: [{ userId: firstUser._id }, { userId: secondUser._id }],
+        },
+      ],
+      { session }
+    );
+
     const [firstConversationView, secondConversationView] =
       await ConversationView.insertMany(
         [

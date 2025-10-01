@@ -90,17 +90,43 @@ const conversationController = {
             "conversation.status": "active",
           },
         },
-        // Stage 5: Lọc theo tên nếu có
+
+        {
+          $addFields: {
+            userParticipant: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: "$conversation.participants",
+                    as: "participant",
+                    cond: { $eq: ["$$participant.userId", userId] },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
 
         {
           $lookup: {
             from: "messages",
-            let: { conversationId: "$conversationId" },
+            let: {
+              conversationId: "$conversationId",
+              skipUntilOffset: "$userParticipant.skipUntilOffset",
+            },
             pipeline: [
               // Tìm tất cả tin nhắn của conversation này
               {
                 $match: {
                   $expr: { $eq: ["$conversationId", "$$conversationId"] },
+                },
+              },
+              {
+                $match: {
+                  $expr: {
+                    $gt: ["$_id", "$$skipUntilOffset"],
+                  },
                 },
               },
               // Sắp xếp theo thời gian tạo (giảm dần - từ mới đến cũ)
@@ -184,6 +210,12 @@ const conversationController = {
 
         {
           $sort: { lastMessageDate: -1 },
+        },
+
+        {
+          $project: {
+            userParticipant: 0,
+          },
         },
       ];
 
