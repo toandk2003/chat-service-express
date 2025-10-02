@@ -34,10 +34,6 @@ const ConversationSchema = new BaseSchema(
       enum: ["active", "inactive"],
       default: "active",
     },
-    hasMessage: {
-      type: Boolean,
-      default: false,
-    },
   },
   {
     collection: "conversations",

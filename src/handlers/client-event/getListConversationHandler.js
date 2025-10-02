@@ -1,18 +1,24 @@
-const { User } = require("../models/User");
-const UserConversation = require("../models/UserConversation");
-const countTotal = require("../common/utils/countTotal");
-const queryDocument = require("../common/utils/queryDocument");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
-const Conversation = require("../models/Conversation");
-const { Message, STATUS, REACTION } = require("../models/Message");
+const { User } = require("../../models/User");
+const UserConversation = require("../../models/UserConversation");
+const countTotal = require("../../common/utils/countTotal");
+const queryDocument = require("../../common/utils/queryDocument");
+const createPaginateResponse = require("../../common/utils/createPaginateResponse");
+const Conversation = require("../../models/Conversation");
+const { Message, STATUS, REACTION } = require("../../models/Message");
 
-const conversationController = {
-  getList: async (req, res) => {
+const getListConversationHandler = (socket, socketEventBus) => {
+  // Lắng nghe sự kiện 'hello' từ client
+  socket.on("get_list_conversation", async (messageJSON) => {
+    console.log("\nstart-get-list-conversation\n"); // In ra console server
+
+    const data = JSON.parse(messageJSON);
+    console.log("Data: ", data); // In ra console server
+    console.log("rooms of currentUser", socket.rooms);
+
     try {
-      const { name, pageSize, currentPage, avoidConversationIds } = req.query;
-      const email = req.currentUser.email;
+      const { name, pageSize, currentPage, avoidConversationIds } = data;
+      const email = socket.currentUser.email;
       console.log("email: " + email);
-      console.log("req: ", req.query);
 
       const user = await User.findOne({ email, status: "ACTIVE" });
 
@@ -211,6 +217,9 @@ const conversationController = {
         {
           $sort: { lastMessageDate: -1 },
         },
+        {
+          $unwind: "$conversationViews",
+        },
 
         {
           $project: {
@@ -230,8 +239,46 @@ const conversationController = {
         currentPage
       );
 
+      paginatedResults.forEach(async (userConversation) => {
+        const lastMessage = userConversation.lastMessage[0];
+        const senderId = lastMessage.senderId;
+        const conversationId = userConversation.conversationId;
+        console.log("lastMessage: " + JSON.stringify(lastMessage));
+        console.log("senderId: " + JSON.stringify(senderId));
+        console.log("conversationId: " + JSON.stringify(conversationId));
+        console.log("userId: " + JSON.stringify(userId));
+
+        if (senderId.equals(userId)) {
+          userConversation.conversation.countUnreadMessage = 0;
+        } else {
+          const [lastReadOffset, skipUntilOffset] =
+            userConversation.conversation.participants
+              .filter((participant) => participant.userId === userId)
+              .map((participant) => [
+                participant.lastReadOffset,
+                participant.skipUntilOffset,
+              ]);
+
+          console.log("lastReadOffset: " + JSON.stringify(lastReadOffset));
+          console.log("skipUntilOffset: " + JSON.stringify(skipUntilOffset));
+
+          const unreadMessages = await Message.find({
+            _id: { $gt: Math.max(skipUntilOffset, lastReadOffset) },
+            conversationId,
+            "recipients.userId": userId,
+            status: { $ne: STATUS.READ },
+          });
+
+          console.log("unreadMessages: " + JSON.stringify(unreadMessages));
+
+          userConversation.conversation.countUnreadMessage =
+            unreadMessages.length;
+        }
+      });
+
       // Tạo kết quả phân trang
-      return res.json(
+      socket.emit(
+        "get_list_conversation_response",
         createPaginateResponse(
           true,
           200,
@@ -244,14 +291,15 @@ const conversationController = {
       );
     } catch (error) {
       console.error(error);
-      res.status(500).json({
-        message: "Internal server error",
+
+      socket.emit("get_list_conversation_response", {
+        message: error.message,
         error: error.message,
         success: false,
         status: 500,
       });
     }
-  },
+  });
 };
 
-module.exports = conversationController;
+module.exports = getListConversationHandler;
