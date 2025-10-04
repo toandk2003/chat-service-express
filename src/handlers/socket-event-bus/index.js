@@ -1,8 +1,5 @@
 const { createClient } = require("redis");
-
-const EVENT_LISTEN_IN_REDIS = [
-  "test", // Thêm các sự kiện bạn muốn lắng nghe từ Redis ở đây
-];
+const handleSendMessageToReceiver = require("./handleSendMessageToReceiver");
 
 // DON'T TOUCH
 class SocketEventBus {
@@ -26,10 +23,6 @@ class SocketEventBus {
     const socketEventBus = new SocketEventBus(pubClient, subClient);
 
     socketEventBus.subcribe();
-    console.log(
-      "✅ SocketEventBus instance created and subscribed to events: ",
-      EVENT_LISTEN_IN_REDIS
-    );
 
     return socketEventBus;
   }
@@ -51,28 +44,9 @@ class SocketEventBus {
   }
 
   subcribe() {
-    EVENT_LISTEN_IN_REDIS.forEach((event) => {
-      this.subClient.subscribe(event, async (message) => {
-        if (!event) {
-          throw new Error("event is empty, can not subcribe");
-        }
-
-        const { userId, data } = JSON.parse(message);
-        console.log(`Received message on ${event}:`, { userId, data });
-
-        const room = `${event}_${userId}`;
-
-        console.log(
-          "The room what all member of that will be received message is : ",
-          room
-        );
-
-        const listSocketToEmits = await global.io.in(room).allSockets();
-
-        console.log("listSocketToEmits", listSocketToEmits);
-
-        global.io.to(room).emit(event, data);
-      });
+    // send message to receiver
+    this.subClient.subscribe("receive_message", async (message) => {
+      await handleSendMessageToReceiver(JSON.parse(message));
     });
   }
 }

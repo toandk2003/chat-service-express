@@ -2,16 +2,18 @@ const testHandler = require("./testHandler");
 const socketAuthMiddleware = require("../../middleware/socketAuth");
 const joinRoom = require("../../common/utils/join-room");
 const { createAdapter } = require("@socket.io/redis-adapter");
+const sendMessageHandler = require("./sendMessageHandler");
 
 // TOUCH IT WHEN YOU ADD NEW HANDLER
 const HANDLERS = [
   testHandler,
+  sendMessageHandler,
 
   // Thêm vào array này khi có handler mới
 ];
 const ROOMS = [
   // Thêm vào array này khi muon room mới
-  "test",
+  "indentity",
 ];
 
 // DON'T TOUCH
@@ -57,4 +59,4 @@ const clientSocketHandler = async (io, socketEventBus) => {
   });
 };
 
-module.exports = clientSocketHandler;
+module.exports = { clientSocketHandler, ROOMS };
