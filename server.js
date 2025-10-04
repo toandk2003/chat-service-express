@@ -15,6 +15,8 @@ const fileRoutes = require("./src/routes/fileRoutes");
 const syncConsumer = require("./src/handlers/sync-event");
 const EventChangeStreamService = require("./src/services/eventChangeStreamService");
 
+// console.log = function () {};
+
 global.io = socketIo(server, {
   cors: {
     origin: "*", // Cho phép tất cả các origin

@@ -7,6 +7,8 @@ const server = http.createServer(app);
 const connectDB = require("./src/config/database");
 const EventChangeStreamService = require("./src/services/eventChangeStreamService");
 
+// console.log = function () {};
+
 const initServer = async () => {
   try {
     // Kết nối đến cơ sở dữ liệu

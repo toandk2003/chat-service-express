@@ -12,6 +12,7 @@ class BaseSchema extends mongoose.Schema {
       },
       {
         timestamps: true, // Tự động thêm createdAt/updatedAt
+        optimisticConcurrency: true, // ⚡ bật OCC cho toàn bộ schema kế thừa
         ...options,
       }
     );

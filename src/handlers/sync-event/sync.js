@@ -1,4 +1,5 @@
 const syncConversation = require("./syncConversation");
+const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
 
 const sync = async (message) => {
@@ -8,6 +9,10 @@ const sync = async (message) => {
     switch (eventType) {
       case "SYNC_USER":
         await syncUser(data);
+        break;
+
+      case "SYNC_UPDATE_USER":
+        await syncUpdateUser(data);
         break;
 
       case "SYNC_CONVERSATION":
