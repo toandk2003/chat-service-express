@@ -97,7 +97,10 @@ class SyncConsumer {
           }
         );
 
-        if (messagesInPendingEntriesList && messagesInPendingEntriesList.length > 0) {
+        if (
+          messagesInPendingEntriesList &&
+          messagesInPendingEntriesList.length > 0
+        ) {
           await this.processMessages(messagesInPendingEntriesList);
         }
 
@@ -143,14 +146,22 @@ class SyncConsumer {
   }
 
   async processMessage(message) {
-    console.log('\n-----------------------------new message---------------------------')
+    console.log(
+      "\n-----------------------------new message---------------------------"
+    );
     console.log(
       `✅ Processing message: ${message.id} sent at ${message.message.sentAt}`
     );
-    const data = JSON.parse(JSON.parse(message.message.data));
 
-    console.log("Handle Event : ", data);
-    
+    let data = null;
+    try {
+      data = JSON.parse(JSON.parse(message.message.data));
+    } catch (error) {
+      data = JSON.parse(message.message.data);
+    }
+
+    console.log("Handle Event with data is Object Javascript: ", data);
+
     await sync(data);
   }
 

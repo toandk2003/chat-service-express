@@ -14,6 +14,10 @@ const sync = async (message) => {
         await syncConversation(data);
         break;
 
+      case "TEST":
+        console.log("WOWWWWWWWW____TESTTTTTTT: ", data);
+        break;
+
       default:
         throw new Error("NOT FOUND CURRENT EVENT TYPE: " + eventType);
     }

@@ -13,6 +13,7 @@ const SocketEventBus = require("./src/handlers/socket-event-bus");
 const connectDB = require("./src/config/database");
 const fileRoutes = require("./src/routes/fileRoutes");
 const syncConsumer = require("./src/handlers/sync-event");
+const EventChangeStreamService = require("./src/services/eventChangeStreamService");
 
 global.io = socketIo(server, {
   cors: {
@@ -58,6 +59,9 @@ const initServer = async () => {
 
     // Khởi động sync consumer
     (await syncConsumer.getInstance()).startConsuming();
+
+    // Khởi động change stream mongoDB
+    await (await EventChangeStreamService.getInstance()).start();
 
     // Khởi động server HTTP
     const PORT = process.env.PORT;

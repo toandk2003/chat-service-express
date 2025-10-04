@@ -5,6 +5,10 @@ const queryDocument = require("../../common/utils/queryDocument");
 const createPaginateResponse = require("../../common/utils/createPaginateResponse");
 const Conversation = require("../../models/Conversation");
 const { Message, STATUS, REACTION } = require("../../models/Message");
+const countDocument = require("../../common/utils/countDocument");
+const SynchronizePublisher = require("../../messageBroker/synchronizePublisher");
+const Event = require("../../models/event");
+const createEventEntity = require("../../common/utils/createEventEntity");
 
 const getListConversationHandler = (socket, socketEventBus) => {
   // Lắng nghe sự kiện 'hello' từ client
@@ -14,7 +18,18 @@ const getListConversationHandler = (socket, socketEventBus) => {
     const data = JSON.parse(messageJSON);
     console.log("Data: ", data); // In ra console server
     console.log("rooms of currentUser", socket.rooms);
+    ////////
 
+    const event = createEventEntity({
+      WOW: "WOW",
+      eventType: "TEST",
+    });
+
+    await Event.create(event);
+
+    // (await SynchronizePublisher.getInstance()).publish(event);
+
+    ///////
     try {
       const { name, pageSize, currentPage, avoidConversationIds } = data;
       const email = socket.currentUser.email;
@@ -60,6 +75,7 @@ const getListConversationHandler = (socket, socketEventBus) => {
 
       const userId = user._id;
       const pipeline = [
+        // lay ra cac conversation chua bi xoa
         // Stage 1: Tìm các cuộc hội thoại của user hiện tại
         {
           $match: {
