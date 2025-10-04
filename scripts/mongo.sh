@@ -10,3 +10,6 @@ db.user_conversations.drop();
 db.messages.drop();
 db.attachments.drop();
 db.conversation_views.drop();
+db.events.drop();
+db.resume_tokens.drop();
+;

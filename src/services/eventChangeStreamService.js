@@ -104,8 +104,6 @@ class EventChangeStreamService {
   async handleChange(change) {
     const { fullDocument } = change;
     const { payload, destination } = fullDocument;
-    console.log("payload: ", JSON.stringify(payload, null, 2));
-    console.log("destination: ", JSON.stringify(destination, null, 2));
 
     try {
       // Publish lên Redis Stream

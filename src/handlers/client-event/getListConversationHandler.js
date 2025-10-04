@@ -5,8 +5,6 @@ const queryDocument = require("../../common/utils/queryDocument");
 const createPaginateResponse = require("../../common/utils/createPaginateResponse");
 const Conversation = require("../../models/Conversation");
 const { Message, STATUS, REACTION } = require("../../models/Message");
-const countDocument = require("../../common/utils/countDocument");
-const SynchronizePublisher = require("../../messageBroker/synchronizePublisher");
 const Event = require("../../models/event");
 const createEventEntity = require("../../common/utils/createEventEntity");
 
@@ -18,7 +16,6 @@ const getListConversationHandler = (socket, socketEventBus) => {
     const data = JSON.parse(messageJSON);
     console.log("Data: ", data); // In ra console server
     console.log("rooms of currentUser", socket.rooms);
-    ////////
 
     const event = createEventEntity({
       WOW: "WOW",
@@ -27,9 +24,6 @@ const getListConversationHandler = (socket, socketEventBus) => {
 
     await Event.create(event);
 
-    // (await SynchronizePublisher.getInstance()).publish(event);
-
-    ///////
     try {
       const { name, pageSize, currentPage, avoidConversationIds } = data;
       const email = socket.currentUser.email;
@@ -245,15 +239,12 @@ const getListConversationHandler = (socket, socketEventBus) => {
       ];
 
       // Thực hiện đếm tổng số bản ghi
-      const total = await countTotal(UserConversation, pipeline);
-
       // Thêm skip và limit vào pipeline đuser_conversationsể phân trang
-      const paginatedResults = await queryDocument(
-        UserConversation,
-        pipeline,
-        pageSize,
-        currentPage
-      );
+
+      const [total, paginatedResults] = await Promise.all([
+        countTotal(UserConversation, pipeline),
+        queryDocument(UserConversation, pipeline, pageSize, currentPage),
+      ]);
 
       paginatedResults.forEach(async (userConversation) => {
         const lastMessage = userConversation.lastMessage[0];
@@ -264,47 +255,33 @@ const getListConversationHandler = (socket, socketEventBus) => {
         console.log("conversationId: " + JSON.stringify(conversationId));
         console.log("userId: " + JSON.stringify(userId));
 
-        if (senderId.equals(userId)) {
-          userConversation.conversation.countUnreadMessage = 0;
-        } else {
-          const [lastReadOffset, skipUntilOffset] =
-            userConversation.conversation.participants
-              .filter((participant) => participant.userId === userId)
-              .map((participant) => [
-                participant.lastReadOffset,
-                participant.skipUntilOffset,
-              ]);
+        const participant = userConversation.conversation.participants.find(
+          (item) => item.userId.equals(userId)
+        );
+        const countUnreadMessage = participant.unreadMessageNums;
+        console.log("countUnreadMessage: " + countUnreadMessage);
+        console.log("participant: " + JSON.stringify(participant));
 
-          console.log("lastReadOffset: " + JSON.stringify(lastReadOffset));
-          console.log("skipUntilOffset: " + JSON.stringify(skipUntilOffset));
-
-          const unreadMessages = await Message.find({
-            _id: { $gt: Math.max(skipUntilOffset, lastReadOffset) },
-            conversationId,
-            "recipients.userId": userId,
-            status: { $ne: STATUS.READ },
-          });
-
-          console.log("unreadMessages: " + JSON.stringify(unreadMessages));
-
-          userConversation.conversation.countUnreadMessage =
-            unreadMessages.length;
-        }
+        // Gán biến đếm số tin nhắn chưa đọc
+        userConversation.conversation.countUnreadMessage = countUnreadMessage;
       });
 
-      // Tạo kết quả phân trang
-      socket.emit(
-        "get_list_conversation_response",
-        createPaginateResponse(
-          true,
-          200,
-          "Here is user's conversation.",
-          currentPage,
-          pageSize,
-          total,
-          paginatedResults
-        )
+      const unreadConversationNums = user.unreadConversationNums;
+      console.log("unreadConversationNums: ", unreadConversationNums);
+
+      const response = createPaginateResponse(
+        true,
+        200,
+        "Here is user's conversation.",
+        currentPage,
+        pageSize,
+        total,
+        paginatedResults
       );
+      // Gán biến đếm số conversation chưa đọc
+      response.data.unreadConversationNums = unreadConversationNums;
+      // Tạo kết quả phân trang
+      socket.emit("get_list_conversation_response", response);
     } catch (error) {
       console.error(error);
 
