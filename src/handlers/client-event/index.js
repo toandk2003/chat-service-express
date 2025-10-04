@@ -2,12 +2,10 @@ const testHandler = require("./testHandler");
 const socketAuthMiddleware = require("../../middleware/socketAuth");
 const joinRoom = require("../../common/utils/join-room");
 const { createAdapter } = require("@socket.io/redis-adapter");
-const getListConversationHandler = require("./getListConversationHandler");
 
 // TOUCH IT WHEN YOU ADD NEW HANDLER
 const HANDLERS = [
   testHandler,
-  getListConversationHandler,
 
   // Thêm vào array này khi có handler mới
 ];

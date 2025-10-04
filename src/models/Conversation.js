@@ -32,7 +32,7 @@ const ConversationSchema = new BaseSchema(
         },
       },
     ],
-    currentMember: { type: Number, default: 0 },
+    currentMember: { type: Number, default: 2 },
     status: {
       type: String,
       enum: ["active", "inactive"],
