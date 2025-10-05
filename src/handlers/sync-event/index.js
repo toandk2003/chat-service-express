@@ -82,47 +82,30 @@ class SyncConsumer {
 
     while (true) {
       try {
-        const messagesInPendingEntriesList = await this.redisClient.xReadGroup(
-          this.groupName, // group name
-          this.consumerName, // consumer name
-          [
-            {
-              key: this.streamName, // stream name
-              id: ">", // read new messages
-            },
-          ],
-          {
-            COUNT: 10, // đọc tối đa 10 messages
-            BLOCK: 5000, // block 1 giây nếu không có message
-          }
-        );
+        // Đọc cả pending và new messages song song
+        const [pendingMessages, newMessages] = await Promise.all([
+          this.redisClient.xReadGroup(
+            this.groupName,
+            this.consumerName,
+            [{ key: this.streamName, id: "0" }],
+            { COUNT: 10, BLOCK: 0 }
+          ),
+          this.redisClient.xReadGroup(
+            this.groupName,
+            this.consumerName,
+            [{ key: this.streamName, id: ">" }],
+            { COUNT: 50, BLOCK: 5000 } // Block cho messages mới
+          ),
+        ]);
 
-        if (
-          messagesInPendingEntriesList &&
-          messagesInPendingEntriesList.length > 0
-        ) {
-          await this.processMessages(messagesInPendingEntriesList);
+        // Xử lý pending trước
+        if (pendingMessages && pendingMessages.length > 0) {
+          await this.processMessages(pendingMessages);
         }
 
-        const messagesLatest = await this.redisClient.xReadGroup(
-          this.groupName, // group name
-          this.consumerName, // consumer name
-          [
-            {
-              key: this.streamName, // stream name
-              id: "0", // read new messages
-            },
-          ],
-          {
-            COUNT: 10, // đọc tối đa 10 messages
-            BLOCK: 1000, // block 1 giây nếu không có message
-          }
-        );
-
-        if (messagesLatest && messagesLatest.length > 0) {
-          await this.processMessages(messagesLatest);
-        } else {
-          break;
+        // Sau đó xử lý new messages
+        if (newMessages && newMessages.length > 0) {
+          await this.processMessages(newMessages);
         }
       } catch (error) {
         console.error("Error reading from stream:", error);

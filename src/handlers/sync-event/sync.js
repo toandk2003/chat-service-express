@@ -1,6 +1,7 @@
 const syncConversation = require("./syncConversation");
 const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
+const syncSendMessage = require("./syncSendMessage");
 
 const sync = async (message) => {
   try {
@@ -17,6 +18,10 @@ const sync = async (message) => {
 
       case "SYNC_CONVERSATION":
         await syncConversation(data);
+        break;
+
+      case "SYNC_SEND_MESSAGE":
+        await syncSendMessage(data);
         break;
 
       case "TEST":

@@ -6,7 +6,10 @@ const createEventEntity = (payload, destination = process.env.SYNC_STREAM) => {
   if (!destination) {
     throw new Error("❌ Destination stream is not defined");
   }
-  return { payload: JSON.stringify(payload), destination: destination };
+  return {
+    payload: JSON.stringify(payload),
+    destination: destination,
+  };
 };
 
 module.exports = createEventEntity;

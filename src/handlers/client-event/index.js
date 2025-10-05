@@ -11,10 +11,10 @@ const HANDLERS = [
 
   // Thêm vào array này khi có handler mới
 ];
-const ROOMS = [
-  // Thêm vào array này khi muon room mới
-  "indentity",
-];
+// const ROOMS = [
+//   // Thêm vào array này khi muon room mới
+//   "indentity",
+// ];
 
 // DON'T TOUCH
 const clientSocketHandler = async (io, socketEventBus) => {
@@ -44,11 +44,14 @@ const clientSocketHandler = async (io, socketEventBus) => {
       }
     });
 
-    ROOMS.forEach((room) => {
-      const currentUser = socket.currentUser;
-      const specificRoom = `${room}_${currentUser.id}`;
-      joinRoom(socket, specificRoom);
-    });
+    // ROOMS.forEach((room) => {
+    //   const currentUser = socket.currentUser;
+    //   const specificRoom = `${room}_${currentUser.id}`;
+    //   joinRoom(socket, specificRoom);
+    // });
+    const currentUser = socket.currentUser;
+    const specificRoom = currentUser.user._id;
+    joinRoom(socket, specificRoom);
   });
 
   io.engine.on("connection_error", (err) => {
@@ -59,4 +62,4 @@ const clientSocketHandler = async (io, socketEventBus) => {
   });
 };
 
-module.exports = { clientSocketHandler, ROOMS };
+module.exports = { clientSocketHandler };
