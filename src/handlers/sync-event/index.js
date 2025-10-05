@@ -76,45 +76,83 @@ class SyncConsumer {
       }
     }
   }
-
   async startConsuming() {
     console.log(`Starting consumer: ${this.consumerName}`);
 
+    // Xử lý pending messages một lần khi khởi động
+    await this.processPendingMessages();
+
+    // Sau đó chỉ xử lý new messages
     while (true) {
       try {
-        // this.redisClient.xReadGroup(
-        //     this.groupName,
-        //     this.consumerName,
-        //     [{ key: this.streamName, id: "0" }],
-        //     { COUNT: 10, BLOCK: 0 }
-        //   ),
-        // Đọc cả pending và new messages song song
-        const newMessages = await this.redisClient.xReadGroup(
+        const messages = await this.redisClient.xReadGroup(
           this.groupName,
           this.consumerName,
-          [{ key: this.streamName, id: ">" }],
-          { COUNT: 50, BLOCK: 5000 } // Block cho messages mới
+          [{ key: this.streamName, id: ">" }], // Chỉ đọc messages mới
+          {
+            COUNT: 100, // Tăng lên để xử lý nhiều messages cùng lúc
+            BLOCK: 1000, // Giảm block time xuống 1s
+          }
         );
 
-        // // Xử lý pending trước
-        // if (pendingMessages && pendingMessages.length > 0) {
-        //   await this.processMessages(pendingMessages);
-        // }
+        if (messages && messages.length > 0) {
+          await this.processMessages(messages);
+        }
 
-        // Sau đó xử lý new messages
-        if (newMessages && newMessages.length > 0) {
-          await this.processMessages(newMessages);
+        // Định kỳ check pending (mỗi 30s hoặc sau N messages)
+        if (Math.random() < 0.01) {
+          // ~1% cơ hội check pending
+          await this.processPendingMessages();
         }
       } catch (error) {
         console.error("Error reading from stream:", error);
-        throw error;
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Retry delay
       }
+    }
+  }
+
+  async processPendingMessages() {
+    try {
+      console.log("Checking for pending messages...");
+      let hasMore = true;
+      let processedCount = 0;
+
+      while (hasMore) {
+        const pendingMessages = await this.redisClient.xReadGroup(
+          this.groupName,
+          this.consumerName,
+          [{ key: this.streamName, id: "0" }],
+          { COUNT: 100, BLOCK: 0 }
+        );
+
+        if (pendingMessages && pendingMessages.length > 0) {
+          const messageCount = pendingMessages[0]?.messages?.length || 0;
+
+          if (messageCount > 0) {
+            processedCount += messageCount;
+            await this.processMessages(pendingMessages);
+            console.log(`Processed ${messageCount} pending messages`);
+          } else {
+            hasMore = false;
+          }
+        } else {
+          hasMore = false;
+        }
+      }
+
+      if (processedCount > 0) {
+        console.log(`✅ Total pending messages processed: ${processedCount}`);
+      } else {
+        console.log("✅ No pending messages found");
+      }
+    } catch (error) {
+      console.error("Error processing pending messages:", error);
     }
   }
 
   async processMessages(messages) {
     for (const stream of messages) {
-      console.log("duplicate: ", stream.messages.length);
+      console.log("polling message: ", stream.messages.length);
 
       for (const message of stream.messages) {
         try {

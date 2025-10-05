@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const BaseSchema = require("./base/BaseSchema.js");
 
 const STATUS = Object.freeze({
-  READ: "SENT",
+  SENT: "SENT",
   DELIVERED: "DELIVERED",
   READ: "READ",
 });
@@ -28,6 +28,7 @@ const MessageSchema = new BaseSchema(
         status: {
           type: String,
           enum: Object.values(STATUS),
+          default: STATUS.SENT,
         },
         deliveredAt: { type: Date },
         readAt: { type: Date },

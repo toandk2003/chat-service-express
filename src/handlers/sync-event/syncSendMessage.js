@@ -3,44 +3,61 @@ const createEvent = require("../../common/utils/createEventEntity");
 
 const mongoose = require("mongoose");
 const Event = require("../../models/event");
+const { Message } = require("../../models/Message");
 
 const syncSendMessage = async (data) => {
   console.log("syncing sendMessage.....");
-  // const { user } = data;
+  console.log("data: " + JSON.stringify(data, null, 2));
+  let { messageId, conversationId, messageType, content, user } = data;
+  if (messageType === "TEXT") {
+    messageId = new mongoose.Types.ObjectId(messageId);
+    conversationId = new mongoose.Types.ObjectId(conversationId);
+    console.log("messageId: " + messageId);
+    console.log("conversationId: " + conversationId);
 
-  // const userId = new mongoose.Types.ObjectId(user._id);
+    const message = await Message.findById(messageId);
+    if (message) {
+      console.log("this is duplicate message");
+      return;
+    }
 
-  // console.log("data: ", JSON.stringify(data, null, 2));
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      console.log("No exist conversation with id = ", conversationId);
+      throw new Error(`No exist conversation with id = ${conversationId}`);
+    }
 
-  // const conversationId = new mongoose.Types.ObjectId(data.conversationId);
-  // console.log("conversationId: ", JSON.stringify(conversationId, null, 2));
+    const participants = conversation.participants;
 
-  // // get Conversation
-  // const conversation = await Conversation.findById(conversationId);
 
-  // if (!conversation)
-  //   throw new Error(`Conversation with id: ${conversationId} dont exists.`);
-  // console.log("conversation: ", JSON.stringify(conversation, null, 2));
+    // recipients: [
+    //       {
+    //         userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
+    //         status: {
+    //           type: String,
+    //           enum: Object.values(STATUS),
+    //           default: STATUS.SENT,
+    //         },
+    //         deliveredAt: { type: Date },
+    //         readAt: { type: Date },
+    //         reaction: {
+    //           type: String,
+    //           enum: Object.values(REACTION),
+    //           default: null,
+    //         },
+    //         reactedAt: { type: Date },
+    //       },
+    //     ],
+    // insert messsage
+    const newMessage = {
+      senderId: user._id,
+      conversationId,
+      recipients: 
+    };
+    await Message.create(newMessage);
 
-  // // get all receiver
-  // const participantIds = conversation.participants
-  //   .filter((participant) => !participant.userId.equals(userId))
-  //   .map((participant) => participant.userId);
-
-  // // send message to them
-  // console.log("participants: " + participantIds);
-
-  // participantIds.forEach((participantId) => {
-  //   global.io
-  //     .to(participantId.toString())
-  //     .emit("receive_message", { content: " WOWWWWWWWW" });
-  // });
-  // const event = createEvent({
-  //   eventType: "SEND_MESSAGE_EVENT_BUS",
-  //   ...data,
-  // });
-
-  // await Event.create(event);
+    // update count variable in conversation + user
+  }
 };
 
 module.exports = syncSendMessage;

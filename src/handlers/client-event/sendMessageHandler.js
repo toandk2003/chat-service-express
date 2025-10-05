@@ -25,6 +25,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       messageId: data.messageId,
     });
 
+    //TODO checkit
     const userId = new mongoose.Types.ObjectId(user._id);
 
     console.log("data: ", JSON.stringify(data, null, 2));
