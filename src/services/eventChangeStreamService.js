@@ -113,7 +113,9 @@ class EventChangeStreamService {
       };
       await this.synchronizePublisher.publish(event);
 
-      console.log(`✅ Event ${fullDocument._id} processed and sent`);
+      console.log(
+        `✅ Event ${fullDocument._id} processed and sent at ${new Date()}`
+      );
     } catch (error) {
       console.error(`❌ Error processing event ${fullDocument._id}:`, error);
       throw error;

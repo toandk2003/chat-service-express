@@ -1,11 +1,6 @@
-const Test = require("../../models/Test");
 const mongoose = require("mongoose");
-const Message = require("../../models/Message");
-const withTransactionThrow = require("../../common/utils/withTransactionThrow");
 const Conversation = require("../../models/Conversation");
-const { User } = require("../../models/User");
 const createEvent = require("../../common/utils/createEventEntity");
-const SynchronizePublisher = require("../../messageBroker/synchronizePublisher");
 const Event = require("../../models/event");
 
 const sendMessageHandler = async (socket, socketEventBus) => {
@@ -16,11 +11,11 @@ const sendMessageHandler = async (socket, socketEventBus) => {
 
     const data = JSON.parse(message);
     console.log("data: ", JSON.stringify(data, null, 2));
-
+    const user = socket.currentUser.user;
     const event = createEvent({
       eventType: "SYNC_SEND_MESSAGE",
       ...data,
-      user: socket.currentUser.user,
+      user,
     });
     await Event.create(event);
 
@@ -29,6 +24,37 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       message: "Send message successfully",
       messageId: data.messageId,
     });
+
+    const userId = new mongoose.Types.ObjectId(user._id);
+
+    console.log("data: ", JSON.stringify(data, null, 2));
+
+    const conversationId = new mongoose.Types.ObjectId(data.conversationId);
+    console.log("conversationId: ", JSON.stringify(conversationId, null, 2));
+
+    // get Conversation
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation)
+      throw new Error(`Conversation with id: ${conversationId} dont exists.`);
+    console.log("conversation: ", JSON.stringify(conversation, null, 2));
+
+    // get all receiver
+    const participantIds = conversation.participants
+      // .filter((participant) => !participant.userId.equals(userId))
+      .map((participant) => participant.userId);
+
+    // send message to them
+    console.log("participants: " + participantIds);
+
+    await socketEventBus.publish(
+      "emit_message_for_multi_receiver_in_multi_device",
+      {
+        user,
+        participantIds,
+        ...data,
+      }
+    );
   });
 };
 

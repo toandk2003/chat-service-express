@@ -50,7 +50,7 @@ const clientSocketHandler = async (io, socketEventBus) => {
     //   joinRoom(socket, specificRoom);
     // });
     const currentUser = socket.currentUser;
-    const specificRoom = currentUser.user._id;
+    const specificRoom = currentUser.user._id.toString();
     joinRoom(socket, specificRoom);
   });
 

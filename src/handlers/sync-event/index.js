@@ -82,26 +82,24 @@ class SyncConsumer {
 
     while (true) {
       try {
+        // this.redisClient.xReadGroup(
+        //     this.groupName,
+        //     this.consumerName,
+        //     [{ key: this.streamName, id: "0" }],
+        //     { COUNT: 10, BLOCK: 0 }
+        //   ),
         // Đọc cả pending và new messages song song
-        const [pendingMessages, newMessages] = await Promise.all([
-          this.redisClient.xReadGroup(
-            this.groupName,
-            this.consumerName,
-            [{ key: this.streamName, id: "0" }],
-            { COUNT: 10, BLOCK: 0 }
-          ),
-          this.redisClient.xReadGroup(
-            this.groupName,
-            this.consumerName,
-            [{ key: this.streamName, id: ">" }],
-            { COUNT: 50, BLOCK: 5000 } // Block cho messages mới
-          ),
-        ]);
+        const newMessages = await this.redisClient.xReadGroup(
+          this.groupName,
+          this.consumerName,
+          [{ key: this.streamName, id: ">" }],
+          { COUNT: 50, BLOCK: 5000 } // Block cho messages mới
+        );
 
-        // Xử lý pending trước
-        if (pendingMessages && pendingMessages.length > 0) {
-          await this.processMessages(pendingMessages);
-        }
+        // // Xử lý pending trước
+        // if (pendingMessages && pendingMessages.length > 0) {
+        //   await this.processMessages(pendingMessages);
+        // }
 
         // Sau đó xử lý new messages
         if (newMessages && newMessages.length > 0) {
@@ -109,12 +107,15 @@ class SyncConsumer {
         }
       } catch (error) {
         console.error("Error reading from stream:", error);
+        throw error;
       }
     }
   }
 
   async processMessages(messages) {
     for (const stream of messages) {
+      console.log("duplicate: ", stream.messages.length);
+
       for (const message of stream.messages) {
         try {
           await this.processMessage(message);
@@ -123,6 +124,7 @@ class SyncConsumer {
           await this.acknowledgeMessage(message.id);
         } catch (error) {
           console.error(`Error processing message ${message.id}:`, error);
+          throw error;
         }
       }
     }

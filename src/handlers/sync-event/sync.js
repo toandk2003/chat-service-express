@@ -2,6 +2,7 @@ const syncConversation = require("./syncConversation");
 const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
 const syncSendMessage = require("./syncSendMessage");
+const handleSendMessageToReceiver = require("../socket-event-bus/handleSendMessageToReceiver");
 
 const sync = async (message) => {
   try {

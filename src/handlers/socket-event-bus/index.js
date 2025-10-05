@@ -45,9 +45,12 @@ class SocketEventBus {
 
   subcribe() {
     // send message to receiver
-    this.subClient.subscribe("receive_message", async (message) => {
-      await handleSendMessageToReceiver(JSON.parse(message));
-    });
+    this.subClient.subscribe(
+      "emit_message_for_multi_receiver_in_multi_device",
+      async (message) => {
+        await handleSendMessageToReceiver(JSON.parse(message));
+      }
+    );
   }
 }
 
