@@ -11,8 +11,10 @@ const syncConversation = async (data) => {
     const firstUserEmail = data.participants[0];
     const secondUserEmail = data.participants[1];
 
-    const firstUser = await User.findOne({ email: firstUserEmail });
-    const secondUser = await User.findOne({ email: secondUserEmail });
+    const [firstUser, secondUser] = await Promise.all([
+      User.findOne({ email: firstUserEmail }),
+      User.findOne({ email: secondUserEmail }),
+    ]);
 
     if (!firstUser)
       throw new Error("NOT FOUND USER WITH EMAIL: " + firstUserEmail);
