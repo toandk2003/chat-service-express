@@ -12,10 +12,12 @@ const ConversationViewSchema = new BaseSchema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "users",
     },
-    avatar: {
-      type: String,
-      default: null,
-    },
+    avatar: [
+      {
+        type: String,
+        default: null,
+      },
+    ],
     bucket: {
       type: String,
       default: null,
