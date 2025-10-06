@@ -93,10 +93,10 @@ const UserSchema = new BaseSchema(
         return now;
       },
     },
-    unreadConversationNums: {
-      type: Number,
-      default: 0,
-    },
+    // unreadConversationNums: {
+    //   type: Number,
+    //   default: 0,
+    // },
     deletedAt: {
       type: Date,
       default: null,

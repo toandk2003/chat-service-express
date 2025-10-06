@@ -6,6 +6,7 @@ const UserConversation = require("../models/UserConversation");
 const countTotal = require("../common/utils/countTotal");
 const queryDocument = require("../common/utils/queryDocument");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
+const ConversationView = require("../models/ConversationView");
 
 const conversationRoutes = express.Router();
 
@@ -39,9 +40,6 @@ conversationRoutes.get("/conversations", async (req, res) => {
         recipients: [
           {
             userId: fakeUser16._id,
-            status: STATUS.DELIVERED,
-            deliveredAt: new Date(),
-            readAt: new Date(),
             reaction: REACTION.ANGRY,
             reactedAt: new Date(),
           },
@@ -57,175 +55,47 @@ conversationRoutes.get("/conversations", async (req, res) => {
     console.log("avoidConversationIds: ", avoidConversationIds);
 
     const userId = user._id;
-    const pipeline = [
-      // lay ra cac conversation chua bi xoa
-      // Stage 1: Tìm các cuộc hội thoại của user hiện tại
-      {
-        $match: {
-          userId,
-          status: "active",
-          conversationId: {
-            // omit conversation
-            $nin:
-              Array.isArray(avoidConversationIds) &&
-              avoidConversationIds.every((item) => typeof item === "string")
-                ? [...avoidConversationIds]
-                : typeof avoidConversationIds === "string"
-                ? [avoidConversationIds]
-                : [],
-          },
-        },
-      },
-      // Stage 2: Join với conversation để lấy thông tin
-      {
-        $lookup: {
-          from: "conversations",
-          localField: "conversationId",
-          foreignField: "_id",
-          as: "conversation",
-        },
-      },
-      // Stage 3: Unwrap mảng conversation thành object
-      {
-        $unwind: "$conversation",
-      },
-      // Stage 4: Lọc các cuộc hội thoại active
-      {
-        $match: {
-          "conversation.status": "active",
-        },
-      },
 
-      {
-        $addFields: {
-          userParticipant: {
-            $arrayElemAt: [
-              {
-                $filter: {
-                  input: "$conversation.participants",
-                  as: "participant",
-                  cond: { $eq: ["$$participant.userId", userId] },
-                },
-              },
-              0,
-            ],
-          },
-        },
-      },
+    const userConversations = await UserConversation.find({
+      userId,
+      status: "active",
+    });
+    const conversationIds = userConversations.map(
+      (userConversation) => userConversation.conversationId
+    );
 
-      {
-        $lookup: {
-          from: "messages",
-          let: {
-            conversationId: "$conversationId",
-            skipUntilOffset: "$userParticipant.skipUntilOffset",
-          },
-          pipeline: [
-            // Tìm tất cả tin nhắn của conversation này
-            {
-              $match: {
-                $expr: { $eq: ["$conversationId", "$$conversationId"] },
-              },
-            },
-            {
-              $match: {
-                $expr: {
-                  $gt: ["$_id", "$$skipUntilOffset"],
-                },
-              },
-            },
-            // Sắp xếp theo thời gian tạo (giảm dần - từ mới đến cũ)
-            { $sort: { createdAt: -1 } },
-            // Chỉ lấy tin nhắn mới nhất
-            { $limit: 1 },
-          ],
-          as: "lastMessage",
-        },
-      },
-      {
-        $lookup: {
-          from: "conversation_views",
-          let: { conversationId: "$conversationId", userId },
-          pipeline: [
-            // Match dựa trên conversationId
-            {
-              $match: {
-                $expr: {
-                  $eq: ["$conversationId", "$$conversationId"],
-                },
-              },
-            },
-            // Lọc theo loại conversation và điều kiện về refId
-            {
-              $match: {
-                $expr: {
-                  $or: [
-                    // Trường hợp 1: Nếu type là 'private', chỉ lấy những tên với refId khác với userId
-                    {
-                      $and: [
-                        { $eq: ["$type", "private"] },
-                        { $ne: ["$refId", "$$userId"] },
-                      ],
-                    },
-                    // Trường hợp 2: Nếu type là 'group' hoặc 'bot', lấy tất cả
-                    { $in: ["$type", ["group", "bot"]] },
-                  ],
-                },
-              },
-            },
-            // Nếu có điều kiện tìm kiếm theo name
-            ...(name
-              ? [
-                  {
-                    $match: {
-                      name: {
-                        $regex: `.*${name.trim()}.*`,
-                        $options: "i",
-                      },
-                    },
-                  },
-                ]
-              : []),
-          ],
-          as: "conversationViews",
-        },
-      },
+    const conversations = [];
 
-      ...(name
-        ? [
-            {
-              $match: {
-                conversationViews: { $ne: [] }, // Chỉ giữ lại những document mà mảng conversationNames không rỗng
-              },
-            },
-          ]
-        : []),
+    for (let i = 0; i < conversationIds; i++) {
+      const conversation = await Conversation.findById(conversationIds[i]);
+      conversations.push(conversation);
+    }
 
-      {
-        $addFields: {
-          lastMessageDate: {
-            $cond: {
-              if: { $gt: [{ $size: "$lastMessage" }, 0] }, // Kiểm tra nếu có tin nhắn
-              then: { $arrayElemAt: ["$lastMessage.createdAt", 0] }, // Lấy createdAt của tin nhắn đầu tiên trong mảng
-              else: "$conversation.createdAt", // Nếu không có tin nhắn, dùng thời gian tạo conversation
-            },
-          },
-        },
-      },
+    const conversationViews = [];
 
-      {
-        $sort: { lastMessageDate: -1 },
-      },
-      {
-        $unwind: "$conversationViews",
-      },
+    for (let i = 0; i < conversationIds; i++) {
+      const lstViews = await ConversationView.find({
+        conversationId: conversationIds[i],
+      });
+      if (conversations[i].type === "private") {
+        conversationViews.push(
+          lstViews.find((conversationView) => conversationView.refId !== userId)
+        );
+      } else {
+        conversationViews.push(lstViews[0]);
+      }
+    }
 
-      {
-        $project: {
-          userParticipant: 0,
-        },
-      },
-    ];
+    const lastMessages = [];
+    for (let i = 0; i < conversationIds; i++) {
+      const lastMessage = await Message.find({
+        conversationId: conversationIds[i],
+      })
+        .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
+        .limit(1);
+      lastMessages.push(lastMessage);
+    }
+    
 
     // Thực hiện đếm tổng số bản ghi
     // Thêm skip và limit vào pipeline đuser_conversationsể phân trang

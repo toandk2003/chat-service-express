@@ -25,13 +25,6 @@ const MessageSchema = new BaseSchema(
     recipients: [
       {
         userId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
-        status: {
-          type: String,
-          enum: Object.values(STATUS),
-          default: STATUS.SENT,
-        },
-        deliveredAt: { type: Date },
-        readAt: { type: Date },
         reaction: {
           type: String,
           enum: Object.values(REACTION),
@@ -68,3 +61,9 @@ module.exports = {
   STATUS,
   REACTION,
 };
+const newMessage = {
+      senderId: user._id,
+      conversationId,
+      recipients: 
+    };
+    await Message.create(newMessage);

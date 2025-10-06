@@ -18,18 +18,6 @@ const ConversationSchema = new BaseSchema(
     participants: [
       {
         userId: mongoose.Schema.Types.ObjectId,
-        unreadMessageNums: {
-          type: Number,
-          default: 0,
-        },
-        lastReadOffset: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: MIN_OBJECT_ID,
-        },
-        skipUntilOffset: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: MIN_OBJECT_ID,
-        },
       },
     ],
     currentMember: { type: Number, default: 2 },
