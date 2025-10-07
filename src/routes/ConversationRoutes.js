@@ -20,78 +20,22 @@ conversationRoutes.get("/conversations", async (req, res) => {
 
     const user = await User.findOne({ email, status: "ACTIVE" });
 
-    const conv = await Conversation.findOne();
-
-    const fakeUser0 = await User.findOne({
-      email: "fakeUser0@gmail.com",
-      status: "ACTIVE",
-    });
-
-    const fakeUser16 = await User.findOne({
-      email: "fakeUser16@gmail.com",
-      status: "ACTIVE",
-    });
-
-    await Message.insertMany([
-      {
-        conversationId: conv._id,
-        senderId: fakeUser0._id,
-        recipients: [
-          {
-            userId: fakeUser16._id,
-            reaction: REACTION.ANGRY,
-            reactedAt: new Date(),
-          },
-        ],
-        reaction: REACTION.LIKE,
-        reactedAt: new Date(),
-        content: "ssss",
-        type: "text",
-      },
-    ]);
-
     console.log("user: ", user);
     console.log("avoidConversationIds: ", avoidConversationIds);
 
     const userId = user._id;
 
-    try {
-      await Statistic.insertMany([
-        {
-          userId,
-          conversations: [
-            {
-              conversationId: conv._id,
-            },
-          ],
-        },
-      ]);
-    } catch (error) {
-      console.log(error);
-    }
-
     const statistic = await Statistic.findOne({ userId });
     console.log("statistic: ", JSON.stringify(statistic, null, 2));
-
-    // const userConversations = await UserConversation.find({
-    //   userId,
-    //   status: "active",
-    // });
-    // console.log("userConversations: ", userConversations);
 
     const myConversations = statistic.conversations.filter(
       (conversation) => conversation.status !== "invisible"
     );
     console.log("myConversations: ", myConversations);
 
-    const conversations = [];
-
-    for (let i = 0; i < myConversations.length; i++) {
-      const conversation = await Conversation.findById(
-        myConversations[i].conversationId
-      );
-      conversations.push(conversation);
-    }
+    const conversations = await Conversation.find({
+      _id: { $in: myConversations.map((item) => item.conversationId) },
+    });
     console.log("conversations: ", conversations);
 
     const conversationViews = [];
@@ -136,8 +80,9 @@ conversationRoutes.get("/conversations", async (req, res) => {
 
     const allRecord = conversations
       .filter((conversation, index) => {
-        // const conversationView = conversationViews[index]._doc;
-        return name && conversationViews[index].name.includes(name);
+        return name && !conversationViews[index].name.includes(name)
+          ? false
+          : true;
       })
       .map((conversation, index) => {
         const conversationId = conversation._id;
@@ -184,13 +129,11 @@ conversationRoutes.get("/conversations", async (req, res) => {
     );
 
     // // Gán biến đếm số conversation chưa đọc
-    const unreadConversationNums = 9999;
-    response.data.unreadConversationNums = unreadConversationNums;
+    response.data.unreadConversationNums = statistic.unreadConversationNums;
     // // Tạo kết quả phân trang
     return res.json(response);
   } catch (error) {
     console.error(error);
-
     res.json({
       message: error.message,
       error: error.message,
