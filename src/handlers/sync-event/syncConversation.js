@@ -1,6 +1,7 @@
 const withTransactionThrow = require("../../common/utils/withTransactionThrow");
 const Conversation = require("../../models/Conversation");
 const ConversationView = require("../../models/ConversationView");
+const Statistic = require("../../models/Statistic");
 const { User } = require("../../models/User");
 const UserConversation = require("../../models/UserConversation");
 
@@ -70,8 +71,39 @@ const syncConversation = async (data) => {
       { session }
     );
 
-    const [firstConversationView, secondConversationView] =
-      await ConversationView.insertMany(
+    const [firstStatistic, secondStatistic] = await Promise.all([
+      Statistic.findOne({ userId: firstUser._id }),
+      Statistic.findOne({ userId: secondUser._id }),
+    ]);
+
+    if (!firstStatistic)
+      throw new Error(
+        `NOT FOUND statistic of user with userId: ${firstUser._id}`
+      );
+
+    if (!secondStatistic)
+      throw new Error(
+        `NOT FOUND statistic of user with userId: ${secondUser._id}`
+      );
+
+    console.log(" conversation.....", JSON.stringify(firstStatistic, null, 2));
+    console.log(" conversation.....", JSON.stringify(secondStatistic, null, 2));
+
+    firstStatistic.conversations.push({ conversationId: conversation._id });
+    firstStatistic.unreadConversationNums = 1;
+
+    secondStatistic.conversations.push({ conversationId: conversation._id });
+    secondStatistic.unreadConversationNums = 1;
+
+    await Promise.all([
+      UserConversation.insertMany(
+        [
+          { userId: firstUser._id, conversationId: conversation._id },
+          { userId: secondUser._id, conversationId: conversation._id },
+        ],
+        { session }
+      ),
+      ConversationView.insertMany(
         [
           {
             conversationId: conversation._id,
@@ -89,18 +121,10 @@ const syncConversation = async (data) => {
           },
         ],
         { session }
-      );
-
-    console.log(JSON.stringify(firstConversationView, null, 2));
-    console.log(JSON.stringify(secondConversationView, null, 2));
-
-    await UserConversation.insertMany(
-      [
-        { userId: firstUser._id, conversationId: conversation._id },
-        { userId: secondUser._id, conversationId: conversation._id },
-      ],
-      { session }
-    );
+      ),
+      firstStatistic.save({ session }),
+      secondStatistic.save({ session }),
+    ]);
   }, data);
 };
 

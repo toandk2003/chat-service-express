@@ -1,3 +1,4 @@
+const Statistic = require("../../models/Statistic");
 const { User } = require("../../models/User");
 
 const syncUser = async (data) => {
@@ -11,7 +12,10 @@ const syncUser = async (data) => {
     console.log("User already exists:", user);
     return;
   }
-  await User.create(data);
+  const newUser = await User.create(data);
+  await Statistic.create({
+    userId: newUser._id,
+  });
 };
 
 module.exports = syncUser;

@@ -33,6 +33,8 @@ const ConversationViewSchema = new BaseSchema(
   }
 );
 
+ConversationViewSchema.index({ conversationId: 1 });
+
 const ConversationView = mongoose.model(
   "conversation_views",
   ConversationViewSchema

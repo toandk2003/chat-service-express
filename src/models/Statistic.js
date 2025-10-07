@@ -20,7 +20,12 @@ const StatisticSchema = new BaseSchema(
         },
         unreadMessageNums: {
           type: Number,
-          default: 0,
+          default: 1,
+        },
+        status: {
+          type: String,
+          enum: ["initial", "running", "invisible"],
+          default: "initial",
         },
         lastReadOffset: {
           type: mongoose.Schema.Types.ObjectId,
@@ -30,6 +35,10 @@ const StatisticSchema = new BaseSchema(
           type: mongoose.Schema.Types.ObjectId,
           default: MIN_OBJECT_ID,
         },
+        createdAt: {
+          type: Date,
+          default: new Date(),
+        },
       },
     ],
   },
@@ -38,6 +47,7 @@ const StatisticSchema = new BaseSchema(
   }
 );
 
+StatisticSchema.index({ userId: 1 });
 const Statistic = mongoose.model("statistics", StatisticSchema);
 
 module.exports = Statistic;

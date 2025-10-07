@@ -12,4 +12,5 @@ db.attachments.drop();
 db.conversation_views.drop();
 db.events.drop();
 db.resume_tokens.drop();
+db.statistics.drop();
 ;

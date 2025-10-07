@@ -49,12 +49,12 @@ const syncSendMessage = async (data) => {
     //       },
     //     ],
     // insert messsage
-    const newMessage = {
-      senderId: user._id,
-      conversationId,
-      recipients: 
-    };
-    await Message.create(newMessage);
+    // const newMessage = {
+    //   senderId: user._id,
+    //   conversationId,
+    //   recipients: 
+    // };
+    // await Message.create(newMessage);
 
     // update count variable in conversation + user
   }

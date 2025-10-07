@@ -3,10 +3,9 @@ const { User } = require("../models/User");
 const { Message, STATUS, REACTION } = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const UserConversation = require("../models/UserConversation");
-const countTotal = require("../common/utils/countTotal");
-const queryDocument = require("../common/utils/queryDocument");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const ConversationView = require("../models/ConversationView");
+const Statistic = require("../models/Statistic");
 
 const conversationRoutes = express.Router();
 
@@ -46,7 +45,7 @@ conversationRoutes.get("/conversations", async (req, res) => {
         ],
         reaction: REACTION.LIKE,
         reactedAt: new Date(),
-        content: "content",
+        content: "ssss",
         type: "text",
       },
     ]);
@@ -56,77 +55,123 @@ conversationRoutes.get("/conversations", async (req, res) => {
 
     const userId = user._id;
 
-    const userConversations = await UserConversation.find({
-      userId,
-      status: "active",
-    });
-    const conversationIds = userConversations.map(
-      (userConversation) => userConversation.conversationId
+    try {
+      await Statistic.insertMany([
+        {
+          userId,
+          conversations: [
+            {
+              conversationId: conv._id,
+            },
+          ],
+        },
+      ]);
+    } catch (error) {
+      console.log(error);
+    }
+
+    const statistic = await Statistic.findOne({ userId });
+    console.log("statistic: ", JSON.stringify(statistic, null, 2));
+
+    // const userConversations = await UserConversation.find({
+    //   userId,
+    //   status: "active",
+    // });
+    // console.log("userConversations: ", userConversations);
+
+    const myConversations = statistic.conversations.filter(
+      (conversation) => conversation.status !== "invisible"
     );
+    console.log("myConversations: ", myConversations);
 
     const conversations = [];
 
-    for (let i = 0; i < conversationIds; i++) {
-      const conversation = await Conversation.findById(conversationIds[i]);
+    for (let i = 0; i < myConversations.length; i++) {
+      const conversation = await Conversation.findById(
+        myConversations[i].conversationId
+      );
       conversations.push(conversation);
     }
+    console.log("conversations: ", conversations);
 
     const conversationViews = [];
 
-    for (let i = 0; i < conversationIds; i++) {
+    for (let i = 0; i < myConversations.length; i++) {
+      const conversationId = myConversations[i].conversationId;
       const lstViews = await ConversationView.find({
-        conversationId: conversationIds[i],
+        conversationId,
       });
       if (conversations[i].type === "private") {
         conversationViews.push(
-          lstViews.find((conversationView) => conversationView.refId !== userId)
+          lstViews.find(
+            (conversationView) => !conversationView.refId.equals(userId)
+          )
         );
       } else {
         conversationViews.push(lstViews[0]);
       }
     }
+    console.log("conversationViews: ", conversationViews);
 
     const lastMessages = [];
-    for (let i = 0; i < conversationIds; i++) {
-      const lastMessage = await Message.find({
-        conversationId: conversationIds[i],
-      })
-        .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
-        .limit(1);
-      lastMessages.push(lastMessage);
+    for (let i = 0; i < myConversations.length; i++) {
+      const conversationRaw = myConversations[i];
+      const conversationId = conversationRaw.conversationId;
+      const skipUntilOffset = conversationRaw.skipUntilOffset;
+      console.log("conversationId: ", conversationId);
+      console.log("skipUntilOffset: ", skipUntilOffset);
+
+      if (conversationRaw.status === "initial") lastMessages.push(null);
+      else if (conversationRaw.status === "running") {
+        const lastMessage = await Message.find({
+          conversationId,
+        })
+          .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
+          .limit(1);
+        lastMessages.push(lastMessage[0]);
+      }
     }
-    
 
-    // Thực hiện đếm tổng số bản ghi
-    // Thêm skip và limit vào pipeline đuser_conversationsể phân trang
+    console.log("lastMessages: ", lastMessages);
 
-    const [total, paginatedResults] = await Promise.all([
-      countTotal(UserConversation, pipeline),
-      queryDocument(UserConversation, pipeline, pageSize, currentPage),
-    ]);
+    const allRecord = conversations
+      .filter((conversation, index) => {
+        // const conversationView = conversationViews[index]._doc;
+        return name && conversationViews[index].name.includes(name);
+      })
+      .map((conversation, index) => {
+        const conversationId = conversation._id;
+        const conversationDoc = conversation._doc;
+        const lastMessage = lastMessages[index];
+        const conversationView = conversationViews[index]._doc;
+        const lastMessageDate = lastMessage
+          ? lastMessage.createdAt
+          : conversation.createdAt;
 
-    paginatedResults.forEach(async (userConversation) => {
-      const lastMessage = userConversation.lastMessage[0];
-      const senderId = lastMessage.senderId;
-      const conversationId = userConversation.conversationId;
-      console.log("lastMessage: " + JSON.stringify(lastMessage));
-      console.log("senderId: " + JSON.stringify(senderId));
-      console.log("conversationId: " + JSON.stringify(conversationId));
-      console.log("userId: " + JSON.stringify(userId));
+        const countUnreadMessage = statistic.conversations.find((item) =>
+          item.conversationId.equals(conversationId)
+        ).unreadMessageNums;
 
-      const participant = userConversation.conversation.participants.find(
-        (item) => item.userId.equals(userId)
+        return {
+          conversation: {
+            ...conversationDoc,
+            lastMessage,
+            conversationView,
+            lastMessageDate,
+            countUnreadMessage,
+          },
+        };
+      })
+      // sắp xếp giảm dần theo lastMessageDate
+      .sort(
+        (a, b) =>
+          b.conversation.lastMessageDate - a.conversation.lastMessageDate
       );
-      const countUnreadMessage = participant.unreadMessageNums;
-      console.log("countUnreadMessage: " + countUnreadMessage);
-      console.log("participant: " + JSON.stringify(participant));
-
-      // Gán biến đếm số tin nhắn chưa đọc
-      userConversation.conversation.countUnreadMessage = countUnreadMessage;
-    });
-
-    const unreadConversationNums = user.unreadConversationNums;
-    console.log("unreadConversationNums: ", unreadConversationNums);
+    console.log("allRecord: ", allRecord);
+    const total = allRecord.length;
+    const limit = +pageSize;
+    const offset = +currentPage * +limit;
+    const paginatedResults = allRecord.slice(offset, offset + limit);
 
     const response = createPaginateResponse(
       true,
@@ -138,9 +183,10 @@ conversationRoutes.get("/conversations", async (req, res) => {
       paginatedResults
     );
 
-    // Gán biến đếm số conversation chưa đọc
+    // // Gán biến đếm số conversation chưa đọc
+    const unreadConversationNums = 9999;
     response.data.unreadConversationNums = unreadConversationNums;
-    // Tạo kết quả phân trang
+    // // Tạo kết quả phân trang
     return res.json(response);
   } catch (error) {
     console.error(error);

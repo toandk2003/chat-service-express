@@ -31,6 +31,11 @@ const MessageSchema = new BaseSchema(
           default: null,
         },
         reactedAt: { type: Date },
+        status: {
+          type: String,
+          enum: ["visible", "invisible"],
+          default: "visible",
+        },
       },
     ],
     reaction: {
@@ -42,7 +47,7 @@ const MessageSchema = new BaseSchema(
     content: String,
     type: {
       type: String,
-      enum: ["text", "image", "video", "file"],
+      enum: ["text", "image", "video", "file", "notification"],
       default: "text",
     },
     attachmentIds: [
@@ -53,7 +58,7 @@ const MessageSchema = new BaseSchema(
     collection: "messages",
   }
 );
-
+MessageSchema.index({ conversationId: 1 });
 const Message = mongoose.model("messages", MessageSchema);
 
 module.exports = {
@@ -61,9 +66,3 @@ module.exports = {
   STATUS,
   REACTION,
 };
-const newMessage = {
-      senderId: user._id,
-      conversationId,
-      recipients: 
-    };
-    await Message.create(newMessage);
