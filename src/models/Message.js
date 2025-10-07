@@ -30,11 +30,11 @@ const MessageSchema = new BaseSchema(
           enum: Object.values(REACTION),
           default: null,
         },
-        reactedAt: { type: Date },
+        reactedAt: { type: Date, default: null },
         status: {
           type: String,
           enum: ["sent", "seen", "unsent"],
-          default: "visible",
+          default: "sent",
         },
       },
     ],
@@ -43,7 +43,7 @@ const MessageSchema = new BaseSchema(
       enum: Object.values(REACTION),
       default: null,
     },
-    reactedAt: { type: Date },
+    reactedAt: { type: Date, default: null },
     content: String,
     type: {
       type: String,

@@ -2,60 +2,84 @@ const mongoose = require("mongoose");
 const Conversation = require("../../models/Conversation");
 const createEvent = require("../../common/utils/createEventEntity");
 const Event = require("../../models/event");
+const { Message } = require("../../models/Message");
 
 const sendMessageHandler = async (socket, socketEventBus) => {
   // Lắng nghe sự kiện 'send_message' từ client
   socket.on("send_message", async (message) => {
     console.log("handle send message event.....");
-    console.log("currentUser: ", JSON.stringify(socket.currentUser, null, 2));
 
     const data = JSON.parse(message);
     console.log("data: ", JSON.stringify(data, null, 2));
-    const user = socket.currentUser.user;
-    const event = createEvent({
-      eventType: "SYNC_SEND_MESSAGE",
-      ...data,
-      user,
-    });
-    await Event.create(event);
 
-    socket.emit("send_message_response", {
-      success: true,
-      message: "Send message successfully",
-      messageId: data.messageId,
-    });
+    try {
+      console.log("currentUser: ", JSON.stringify(socket.currentUser, null, 2));
 
-    //TODO checkit
-    const userId = new mongoose.Types.ObjectId(user._id);
+      //TODO checkit
+      const user = socket.currentUser.user;
+      const userId = new mongoose.Types.ObjectId(user._id);
 
-    console.log("data: ", JSON.stringify(data, null, 2));
+      const conversationId = new mongoose.Types.ObjectId(data.conversationId);
+      console.log("conversationId: ", JSON.stringify(conversationId, null, 2));
 
-    const conversationId = new mongoose.Types.ObjectId(data.conversationId);
-    console.log("conversationId: ", JSON.stringify(conversationId, null, 2));
+      // get Conversation
+      const conversation = await Conversation.findById(conversationId);
 
-    // get Conversation
-    const conversation = await Conversation.findById(conversationId);
+      if (!conversation)
+        throw new Error(`Conversation with id: ${conversationId} dont exists.`);
+      console.log("conversation: ", JSON.stringify(conversation, null, 2));
 
-    if (!conversation)
-      throw new Error(`Conversation with id: ${conversationId} dont exists.`);
-    console.log("conversation: ", JSON.stringify(conversation, null, 2));
+      // get all receiver
+      const participantIds = conversation.participants
+        // .filter((participant) => !participant.userId.equals(userId))
+        .map((participant) => participant.userId);
 
-    // get all receiver
-    const participantIds = conversation.participants
-      // .filter((participant) => !participant.userId.equals(userId))
-      .map((participant) => participant.userId);
+      // send message to them
+      console.log("participantIds: " + participantIds);
 
-    // send message to them
-    console.log("participants: " + participantIds);
+      // const event = createEvent({
+      //   eventType: "SYNC_SEND_MESSAGE",
+      //   ...data,
+      //   user,
+      // });
+      // await Event.create(event);
+      await Message.create({
+        _id: new mongoose.Types.ObjectId(data.messageId),
+        conversationId,
+        senderId: userId,
+        recipients: participantIds.map((recipientId) => {
+          return {
+            userId: recipientId,
+          };
+        }),
+        content: data.content,
+        type: data.messageType,
+      });
 
-    await socketEventBus.publish(
-      "emit_message_for_multi_receiver_in_multi_device",
-      {
-        user,
-        participantIds,
-        ...data,
-      }
-    );
+      socket.emit("send_message_response", {
+        success: true,
+        status: 200,
+        message: "Send message successfully",
+        messageId: data.messageId,
+      });
+
+      await socketEventBus.publish(
+        "emit_message_for_multi_receiver_in_multi_device",
+        {
+          user,
+          participantIds,
+          ...data,
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      socket.emit("send_message_response", {
+        success: false,
+        status: 400,
+        message: "Send message successfully because messageId is existed.",
+        messageId: data.messageId,
+      });
+    }
   });
 };
 

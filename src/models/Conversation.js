@@ -18,6 +18,10 @@ const ConversationSchema = new BaseSchema(
     participants: [
       {
         userId: mongoose.Schema.Types.ObjectId,
+        createdAt: {
+          type: Date,
+          default: new Date(),
+        },
       },
     ],
     currentMember: { type: Number, default: 2 },

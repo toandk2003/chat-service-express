@@ -9,7 +9,7 @@ const syncSendMessage = async (data) => {
   console.log("syncing sendMessage.....");
   console.log("data: " + JSON.stringify(data, null, 2));
   let { messageId, conversationId, messageType, content, user } = data;
-  if (messageType === "TEXT") {
+  if (messageType === "text") {
     messageId = new mongoose.Types.ObjectId(messageId);
     conversationId = new mongoose.Types.ObjectId(conversationId);
     console.log("messageId: " + messageId);
