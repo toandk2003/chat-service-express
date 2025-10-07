@@ -33,7 +33,7 @@ const MessageSchema = new BaseSchema(
         reactedAt: { type: Date },
         status: {
           type: String,
-          enum: ["visible", "invisible"],
+          enum: ["sent", "seen", "unsent"],
           default: "visible",
         },
       },

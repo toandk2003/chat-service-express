@@ -93,13 +93,17 @@ conversationRoutes.get("/conversations", async (req, res) => {
           ? lastMessage.createdAt
           : conversation.createdAt;
 
-        const countUnreadMessage = statistic.conversations.find((item) =>
+        const item = statistic.conversations.find((item) =>
           item.conversationId.equals(conversationId)
-        ).unreadMessageNums;
+        );
+
+        const countUnreadMessage = item.unreadMessageNums;
+        const status = item.status; // status in my view
 
         return {
           conversation: {
             ...conversationDoc,
+            status,
             lastMessage,
             conversationView,
             lastMessageDate,
