@@ -1,5 +1,6 @@
 const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
 const Event = require("../models/event");
+const { Message } = require("../models/Message");
 const ResumeToken = require("../models/resumeToken");
 
 class EventChangeStreamService {
@@ -62,7 +63,7 @@ class EventChangeStreamService {
       const options = resumeToken ? { resumeAfter: resumeToken } : {};
 
       // Tạo change stream
-      const changeStream = Event.watch(pipeline, options);
+      const changeStream = Message.watch(pipeline, options);
 
       console.log("👀 Change Stream started, watching events collection...");
 
@@ -102,14 +103,18 @@ class EventChangeStreamService {
    * Xử lý khi có thay đổi trong collection
    */
   async handleChange(change) {
+    console.log("new message in Message Collections");
     const { fullDocument } = change;
-    const { payload, destination } = fullDocument;
+    // const { payload, destination } = fullDocument;
 
     try {
       // Publish lên Redis Stream
       const event = {
-        destination,
-        payload,
+        destination: "sync-stream",
+        payload: JSON.stringify({
+          eventType: "SYNC_SEND_MESSAGE",
+          message: fullDocument,
+        }),
       };
       await this.synchronizePublisher.publish(event);
 
