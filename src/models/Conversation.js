@@ -62,6 +62,10 @@ const ConversationSchema = new BaseSchema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    rowVersionFromSpring: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     collection: "conversations",

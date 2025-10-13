@@ -16,12 +16,18 @@ const syncSendMessage = async (message) => {
     console.log("messageId: " + messageId);
     console.log("conversationId: " + conversationId);
 
-    // const conversation = await Conversation.findById(conversationId);
-    // if (!conversation) {
-    //   console.log("No exist conversation with id = ", conversationId);
-    //   throw new Error(`No exist conversation with id = ${conversationId}`);
-    // }
-    // update count variable in conversation + user
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      console.log("No exist conversation with id = ", conversationId);
+      throw new Error(`No exist conversation with id = ${conversationId}`);
+    }
+
+    conversation.participants.forEach((participant) => {
+      participant.unreadMessageNums++;
+      participant.status = "running";
+    });
+
+    await conversation.save();
   }
 };
 

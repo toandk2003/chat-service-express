@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const BaseSchemaNoOptimistic = require("./base/BaseSchemaNoOptimistic.js");
 const BaseSchema = require("./base/BaseSchema.js");
 
 const STATUS = Object.freeze({
