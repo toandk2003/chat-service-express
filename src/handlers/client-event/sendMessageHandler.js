@@ -37,12 +37,6 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       // send message to them
       console.log("participantIds: " + participantIds);
 
-      // const event = createEvent({
-      //   eventType: "SYNC_SEND_MESSAGE",
-      //   ...data,
-      //   user,
-      // });
-      // await Event.create(event);
       await Message.create({
         _id: new mongoose.Types.ObjectId(data.messageId),
         conversationId,

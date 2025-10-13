@@ -12,7 +12,7 @@ const syncSendMessage = async (message) => {
   const messageId = new mongoose.Types.ObjectId(message._id);
   const conversationId = new mongoose.Types.ObjectId(message.conversationId);
   const messageType = message.type;
-
+  console.log(messageType);
   if (messageType === "text") {
     console.log("messageId: " + messageId);
     console.log("conversationId: " + conversationId);

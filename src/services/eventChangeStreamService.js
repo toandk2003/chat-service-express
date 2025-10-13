@@ -113,7 +113,7 @@ class EventChangeStreamService {
         destination: "sync-stream",
         payload: JSON.stringify({
           eventType: "SYNC_SEND_MESSAGE",
-          message: fullDocument,
+          ...fullDocument,
         }),
       };
       await this.synchronizePublisher.publish(event);
