@@ -15,16 +15,48 @@ const ConversationSchema = new BaseSchema(
       default: null,
     },
     maxMember: { type: Number, default: 2 },
+    currentMember: { type: Number, default: 2 },
     participants: [
       {
         userId: mongoose.Schema.Types.ObjectId,
+        unreadMessageNums: {
+          type: Number,
+          default: 1,
+        },
+        status: {
+          type: String,
+          enum: ["initial", "running", "invisible"],
+          default: "initial",
+        },
+        lastReadOffset: {
+          type: mongoose.Schema.Types.ObjectId,
+          default: MIN_OBJECT_ID,
+        },
+        skipUntilOffset: {
+          type: mongoose.Schema.Types.ObjectId,
+          default: MIN_OBJECT_ID,
+        },
         createdAt: {
           type: Date,
           default: new Date(),
         },
+        view: {
+          name: String,
+          avatar: [
+            {
+              type: String,
+              default: null,
+            },
+          ],
+          bucket: [
+            {
+              type: String,
+              default: null,
+            },
+          ],
+        },
       },
     ],
-    currentMember: { type: Number, default: 2 },
     status: {
       type: String,
       enum: ["active", "inactive"],

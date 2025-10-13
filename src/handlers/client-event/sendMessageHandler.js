@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const Conversation = require("../../models/Conversation");
 const createEvent = require("../../common/utils/createEventEntity");
-const Event = require("../../models/event");
 const { Message } = require("../../models/Message");
 
 const sendMessageHandler = async (socket, socketEventBus) => {

@@ -3,8 +3,6 @@ const { User } = require("../models/User");
 const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
-const ConversationView = require("../models/ConversationView");
-const Statistic = require("../models/Statistic");
 
 const conversationRoutes = express.Router();
 
@@ -132,7 +130,9 @@ conversationRoutes.get("/conversations", async (req, res) => {
     );
 
     // // Gán biến đếm số conversation chưa đọc
-    response.data.unreadConversationNums = statistic.unreadConversationNums;
+    response.data.unreadConversationNums = statistic.conversations.filter(
+      (conversation) => conversation.unreadMessageNums > 0
+    ).length;
     // // Tạo kết quả phân trang
     return res.json(response);
   } catch (error) {
