@@ -44,6 +44,11 @@ const syncConversation = async (data) => {
       ],
       { session }
     );
+
+    firstUser.conversations.push({ _id: conversation._id });
+    secondUser.conversations.push({ _id: conversation._id });
+
+    await Promise.all([firstUser.save(), secondUser.save()]);
   }, data);
 };
 

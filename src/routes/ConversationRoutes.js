@@ -11,108 +11,80 @@ conversationRoutes.get("/conversations", async (req, res) => {
     console.log("\nstart-get-list-conversation\n"); // In ra console server
     const data = req.query;
     console.log("Data: ", JSON.stringify(data)); // In ra console server
-    const { name, pageSize, currentPage, avoidConversationIds } = data;
+    const { name, pageSize, currentPage } = data;
     const email = req.currentUser.email;
     console.log("email: " + email);
 
     const user = await User.findOne({ email, status: "ACTIVE" });
 
     console.log("user: ", user);
-    console.log("avoidConversationIds: ", avoidConversationIds);
 
     const userId = user._id;
 
-    const statistic = await Statistic.findOne({ userId });
-    console.log("statistic: ", JSON.stringify(statistic, null, 2));
-
-    const myConversations = statistic.conversations.filter(
-      (conversation) => conversation.status !== "invisible"
+    const conversationsOfEveryone = await Promise.all(
+      user.conversations.map(async (_id) => {
+        return await Conversation.findById(_id).lean();
+      })
     );
-    console.log("myConversations: ", myConversations);
 
-    const conversations = await Conversation.find({
-      _id: { $in: myConversations.map((item) => item.conversationId) },
-    });
-    console.log("conversations: ", conversations);
+    console.log("conversationsOfEveryone: ", conversationsOfEveryone);
 
-    const conversationViews = [];
-
-    for (let i = 0; i < myConversations.length; i++) {
-      const conversationId = myConversations[i].conversationId;
-      const lstViews = await ConversationView.find({
-        conversationId,
+    const myConversations = conversationsOfEveryone
+      .map((myConversation, index) => {
+        return {
+          ...myConversation.participants.find((participant) =>
+            participant.userId.equals(userId)
+          ),
+          _id: conversationsOfEveryone[index]._id,
+        };
+      })
+      .filter((myConversation) => {
+        if (myConversation.status === "invisible") return false;
+        return name && !myConversation.view.name.includes(name) ? false : true;
       });
-      if (conversations[i].type === "private") {
-        conversationViews.push(
-          lstViews.find(
-            (conversationView) => !conversationView.refId.equals(userId)
-          )
-        );
-      } else {
-        conversationViews.push(lstViews[0]);
-      }
-    }
-    console.log("conversationViews: ", conversationViews);
+
+    console.log("myConversations: ", myConversations);
 
     const lastMessages = [];
     for (let i = 0; i < myConversations.length; i++) {
-      const conversationRaw = myConversations[i];
-      const conversationId = conversationRaw.conversationId;
-      const skipUntilOffset = conversationRaw.skipUntilOffset;
-      console.log("conversationId: ", conversationId);
-      console.log("skipUntilOffset: ", skipUntilOffset);
+      const myConversation = myConversations[i];
+      const skipUntilOffset = myConversation.skipUntilOffset;
+      console.log("myConversation: ", myConversation);
 
-      if (conversationRaw.status === "initial") lastMessages.push(null);
-      else if (conversationRaw.status === "running") {
-        const lastMessage = await Message.find({
-          conversationId,
-        })
-          .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
-          .limit(1);
-        lastMessages.push(lastMessage[0]);
+      if (myConversation.status === "initial") lastMessages.push([]);
+      else if (myConversation.status === "running") {
+        const last10Message = await Message.find({
+          // _id: {
+          //   $gt: skipUntilOffset,
+          // },
+          conversationId: myConversation._id,
+        });
+        // .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
+        // .limit(10);
+        console.log("last10Message: ", last10Message);
+
+        lastMessages.push(last10Message);
       }
     }
 
     console.log("lastMessages: ", lastMessages);
 
-    const allRecord = conversations
-      .filter((conversation, index) => {
-        return name && !conversationViews[index].name.includes(name)
-          ? false
-          : true;
-      })
+    const allRecord = myConversations
       .map((conversation, index) => {
-        const conversationId = conversation._id;
-        const conversationDoc = conversation._doc;
-        const lastMessage = lastMessages[index];
-        const conversationView = conversationViews[index]._doc;
-        const lastMessageDate = lastMessage
-          ? lastMessage.createdAt
-          : conversation.createdAt;
-
-        const item = statistic.conversations.find((item) =>
-          item.conversationId.equals(conversationId)
-        );
-
-        const countUnreadMessage = item.unreadMessageNums;
-        const status = item.status; // status in my view
+        const last10Message = lastMessages[index];
+        const lastUpdate =
+          last10Message.length > 0
+            ? last10Message[last10Message.length - 1].createdAt
+            : conversation.createdAt;
 
         return {
-          conversation: {
-            ...conversationDoc,
-            status,
-            lastMessage,
-            conversationView,
-            lastMessageDate,
-            countUnreadMessage,
-          },
+          ...conversation,
+          last10Message,
+          lastUpdate,
         };
       })
       // sắp xếp giảm dần theo lastMessageDate
-      .sort(
-        (a, b) =>
-          b.conversation.lastMessageDate - a.conversation.lastMessageDate
-      );
+      .sort((a, b) => b.lastUpdate - a.lastUpdate);
     console.log("allRecord: ", allRecord);
     const total = allRecord.length;
     const limit = +pageSize;
@@ -130,7 +102,7 @@ conversationRoutes.get("/conversations", async (req, res) => {
     );
 
     // // Gán biến đếm số conversation chưa đọc
-    response.data.unreadConversationNums = statistic.conversations.filter(
+    response.data.unreadConversationNums = allRecord.filter(
       (conversation) => conversation.unreadMessageNums > 0
     ).length;
     // // Tạo kết quả phân trang

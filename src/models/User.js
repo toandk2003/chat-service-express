@@ -111,6 +111,7 @@ const UserSchema = new BaseSchema(
       type: Number,
       default: 0,
     },
+    conversations: [],
   },
   {
     collection: "users",

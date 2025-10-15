@@ -1,5 +1,4 @@
 const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
-const Event = require("../models/event");
 const { Message } = require("../models/Message");
 const ResumeToken = require("../models/resumeToken");
 
