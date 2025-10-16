@@ -22,6 +22,10 @@ const MessageSchema = new BaseSchema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "conversations",
     },
+    replyForMessgeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
     senderId: { type: mongoose.Schema.Types.ObjectId, ref: "users" },
     recipients: [
       {

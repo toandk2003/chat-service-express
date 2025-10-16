@@ -26,17 +26,27 @@ const syncConversation = async (data) => {
             {
               userId: firstUser._id,
               view: {
-                name: firstUser.fullName,
-                avatar: [firstUser.avatar],
-                bucket: [firstUser.bucket],
+                name: secondUser.fullName,
+                avatar: [
+                  {
+                    userId: secondUser._id,
+                    value: secondUser.avatar,
+                  },
+                ],
+                bucket: secondUser.bucket,
               },
             },
             {
               userId: secondUser._id,
               view: {
-                name: secondUser.fullName,
-                avatar: [secondUser.avatar],
-                bucket: [secondUser.bucket],
+                name: firstUser.fullName,
+                avatar: [
+                  {
+                    userId: firstUser._id,
+                    value: firstUser.avatar,
+                  },
+                ],
+                bucket: firstUser.bucket,
               },
             },
           ],
@@ -48,7 +58,10 @@ const syncConversation = async (data) => {
     firstUser.conversations.push({ _id: conversation._id });
     secondUser.conversations.push({ _id: conversation._id });
 
-    await Promise.all([firstUser.save(), secondUser.save()]);
+    await Promise.all([
+      firstUser.save({ session }),
+      secondUser.save({ session }),
+    ]);
   }, data);
 };
 

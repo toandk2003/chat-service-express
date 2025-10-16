@@ -44,16 +44,14 @@ const ConversationSchema = new BaseSchema(
           name: String,
           avatar: [
             {
-              type: String,
-              default: null,
+              userId: mongoose.Schema.Types.ObjectId,
+              value: String,
             },
           ],
-          bucket: [
-            {
-              type: String,
-              default: null,
-            },
-          ],
+          bucket: {
+            type: String,
+            default: null,
+          },
         },
       },
     ],
