@@ -10,4 +10,5 @@ db.messages.drop();
 db.attachments.drop();
 db.events.drop();
 db.resume_tokens.drop();
+db.attachments.drop();
 ;

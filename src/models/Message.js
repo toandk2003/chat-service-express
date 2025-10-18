@@ -55,9 +55,25 @@ const MessageSchema = new BaseSchema(
       enum: ["text", "image", "video", "file", "notification"],
       default: "text",
     },
-    attachmentIds: [
-      { type: mongoose.Schema.Types.ObjectId, ref: "attachments", default: [] },
+    attachments: [
+      {
+        originalFileName: String,
+        fileSize: Number,
+        bucket: String,
+        contentType: String,
+        key: String,
+        status: {
+          type: String,
+          enum: ["ACTIVE", "INACTIVE"],
+          default: "ACTIVE",
+        },
+      },
     ],
+    status: {
+      type: String,
+      enum: ["CONFIRMED", "WAITING_CONFIRM", "DELETED"],
+      default: "WAITING_CONFIRM",
+    },
   },
   {
     collection: "messages",

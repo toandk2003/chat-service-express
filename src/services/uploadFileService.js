@@ -5,20 +5,31 @@ const path = require("path");
 const s3Config = require("../config/S3Config");
 const S3_CONSTANTS = require("../common/constant/S3Constant");
 const { User } = require("../models/User");
-const Attachment = require("../models/Attachment");
+const { Message } = require("../models/Message");
 
+const Conversation = require("../models/Conversation");
+const withTransactionThrow = require("../common/utils/withTransactionThrow");
+const mongoose = require("mongoose");
 class UploadFileService {
   constructor() {
     this.s3Client = s3Config.getS3Client();
   }
 
-  async uploadFile(fileData, bucketName, currentUser) {
+  async uploadFile(fileData, bucketName, email, body) {
+    console.log("--start-upload-file---");
+    console.log("fileData: ", fileData.length);
+
+    console.log("bucketName: ", bucketName);
+
+    console.log("email: ", email);
+
+    console.log("body: ", JSON.stringify(body, null, 2));
+
     try {
       // Validate input
-      await this.validate(currentUser, fileData);
 
       // Generate presigned URL and save attachment
-      return await this.save(currentUser, fileData, bucketName);
+      return await this.save(email, fileData, bucketName, body);
     } catch (error) {
       console.error("Error in uploadFile:", error.message);
 
@@ -30,45 +41,50 @@ class UploadFileService {
     }
   }
 
-  async validate(currentUser, fileData) {
-    const { originalname, size, mimetype } = fileData;
-    const userId = currentUser.id;
+  async validate(session, email, fileData) {
+    console.log("validating files......");
+    fileData.forEach((file) => {
+      const { originalname, size, mimetype } = file;
 
-    // Validate file size
+      // Validate file name
+      if (!originalname || originalname.trim() === "") {
+        throw new Error("Original file name is required");
+      }
+
+      // Validate extension
+      const extension = path.extname(originalname).toLowerCase();
+      if (!extension || !S3_CONSTANTS.ALLOWED_EXTENSIONS.includes(extension)) {
+        throw new Error(
+          `File extension not supported: ${extension}. Allowed: ${S3_CONSTANTS.ALLOWED_EXTENSIONS.join(
+            ", "
+          )}`
+        );
+      }
+
+      // Validate content type
+      if (
+        !mimetype ||
+        !S3_CONSTANTS.ALLOWED_CONTENT_TYPES.includes(mimetype.toLowerCase())
+      ) {
+        throw new Error(
+          `Content type not supported: ${mimetype}. Allowed: ${S3_CONSTANTS.ALLOWED_CONTENT_TYPES.join(
+            ", "
+          )}`
+        );
+      }
+    });
+
+    let size = 0;
+    fileData.forEach((file) => (size += file.size));
+
+    //  file size
     if (size <= 0 || size > S3_CONSTANTS.MAX_LIMIT_RESOURCE) {
       throw new Error(
         `File size exceeds limit. Max: ${S3_CONSTANTS.MAX_LIMIT_RESOURCE}, Current: ${size}`
       );
     }
 
-    // Validate file name
-    if (!originalname || originalname.trim() === "") {
-      throw new Error("Original file name is required");
-    }
-
-    // Validate extension
-    const extension = path.extname(originalname).toLowerCase();
-    if (!extension || !S3_CONSTANTS.ALLOWED_EXTENSIONS.includes(extension)) {
-      throw new Error(
-        `File extension not supported: ${extension}. Allowed: ${S3_CONSTANTS.ALLOWED_EXTENSIONS.join(
-          ", "
-        )}`
-      );
-    }
-
-    // Validate content type
-    if (
-      !mimetype ||
-      !S3_CONSTANTS.ALLOWED_CONTENT_TYPES.includes(mimetype.toLowerCase())
-    ) {
-      throw new Error(
-        `Content type not supported: ${mimetype}. Allowed: ${S3_CONSTANTS.ALLOWED_CONTENT_TYPES.join(
-          ", "
-        )}`
-      );
-    }
-
-    const user = await User.findOne({ userId });
+    const user = await User.findOne({ email });
     if (!user) {
       throw new Error("User not found");
     }
@@ -92,9 +108,10 @@ class UploadFileService {
       .split("T")[0];
 
     if (today > lastUpdate) {
+      console.log("today > lastUpdate");
       user.currentUsageResourceMedia = 0;
       user.lastUpdateLimitResourceTime = now;
-      await user.save();
+      await user.save({ session });
     }
 
     // Check if exceeds limit
@@ -106,82 +123,151 @@ class UploadFileService {
     }
 
     console.log("Validation passed for file upload");
+
+    return today > lastUpdate;
   }
 
-  async save(currentUser, fileData, bucketName) {
-    const { originalname, size, mimetype } = fileData;
+  async save(email, fileData, bucketName, body) {
+    return await withTransactionThrow(
+      async (session, email, fileData, bucketName, body) => {
+        const isUpdateUserDebitAttachment = await this.validate(
+          session,
+          email,
+          fileData
+        );
 
-    // Generate unique filename
-    const fileExtension = path.extname(originalname);
-    const timestamp = Date.now();
-    const uuid = uuidv4();
-    const fileNameInS3 = `${timestamp}_${uuid}_${originalname}`;
+        const attachmentPromises = fileData.map(async (file) => {
+          const { originalname, size, mimetype } = file;
 
-    console.log("fileNameInS3:", fileNameInS3);
-    console.log("contentType:", mimetype);
-    console.log("fileSize:", size);
+          // Generate unique filename
+          const fileExtension = path.extname(originalname);
+          const timestamp = Date.now();
+          const uuid = uuidv4();
+          const fileNameInS3 = `${timestamp}_${uuid}_${originalname}`;
 
-    // Create PutObjectCommand
-    const putObjectCommand = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: fileNameInS3,
-      ContentType: mimetype,
-      ContentLength: size,
-      // Các metadata khác nếu cần
-      Metadata: {
-        "original-filename": originalname,
-        "uploaded-by": currentUser.id.toString(),
-        "upload-timestamp": timestamp.toString(),
+          console.log("fileNameInS3:", fileNameInS3);
+          console.log("contentType:", mimetype);
+          console.log("fileSize:", size);
+
+          // Create PutObjectCommand
+          const putObjectCommand = new PutObjectCommand({
+            Bucket: bucketName,
+            Key: fileNameInS3,
+            ContentType: mimetype,
+            ContentLength: size,
+            // Các metadata khác nếu cần
+            Metadata: {
+              "original-filename": originalname,
+              "uploaded-by": email,
+              "upload-timestamp": timestamp.toString(),
+            },
+          });
+
+          // Generate presigned PUT URL
+          const presignedUrl = await getSignedUrl(
+            this.s3Client,
+            putObjectCommand,
+            {
+              expiresIn: Math.floor(
+                S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000
+              ), // seconds
+            }
+          );
+
+          console.log("presignedUrl:", presignedUrl);
+
+          return {
+            presignedUrl,
+            originalFileName: originalname,
+            fileSize: size,
+            bucket: bucketName,
+            contentType: mimetype,
+            key: fileNameInS3,
+            status: "ACTIVE",
+            createdAt: new Date(),
+            uploadedAt: new Date(),
+            deletedAt: null,
+          };
+        });
+
+        const attachments = await Promise.all(attachmentPromises);
+        console.log("attachments is : ", attachments);
+        let size = 0;
+        fileData.forEach((file) => (size += file.size));
+        console.log("size is : ", size);
+
+        // // Update limit resource
+        const user = await User.findOne({ email });
+        console.log("user is : ", JSON.stringify(user, null, 2));
+        user.currentUsageResourceMedia += size;
+        user.lastUpdateLimitResourceTime = new Date();
+
+        if (isUpdateUserDebitAttachment) user.__v++;
+
+        const conversationId = new mongoose.Types.ObjectId(body.conversationId);
+        console.log(
+          "conversationId: ",
+          JSON.stringify(conversationId, null, 2)
+        );
+
+        // get Conversation
+        const conversation = await Conversation.findById(conversationId);
+
+        if (!conversation)
+          throw new Error(
+            `Conversation with id: ${conversationId} is not exists.`
+          );
+        console.log("conversation: ", JSON.stringify(conversation, null, 2));
+
+        // get all receiver
+        const participantIds = conversation.participants
+          // .filter((participant) => !participant.userId.equals(userId))
+          .map((participant) => participant.userId);
+
+        // send message to them
+        console.log("participantIds: " + participantIds);
+
+        const [_, messages] = await Promise.all([
+          user.save({ session }),
+          Message.insertMany(
+            [
+              {
+                _id: new mongoose.Types.ObjectId(body.messageId),
+                conversationId: body.conversationId,
+                senderId: user._id,
+                recipients: participantIds.map((recipientId) => {
+                  return {
+                    userId: recipientId,
+                  };
+                }),
+                content: body.content,
+                type: body.messageType,
+                attachments: attachments.map((attachment) => {
+                  const { presignedUrl, ...remain } = attachment;
+                  console.log("remainsss: ", remain);
+                  return remain;
+                }),
+              },
+            ],
+            { session }
+          ),
+        ]);
+
+        console.log("new messageeeee: ", JSON.stringify(messages[0], null, 2));
+
+        return {
+          success: true,
+          status: 200,
+          message:
+            "Presigned URL generated successfully, using it to upload file for chat",
+          data: messages[0],
+        };
       },
-    });
-
-    // Generate presigned PUT URL
-    const presignedUrl = await getSignedUrl(this.s3Client, putObjectCommand, {
-      expiresIn: Math.floor(
-        S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000
-      ), // seconds
-    });
-
-    console.log("presignedUrl:", presignedUrl);
-
-    // Save attachment to database (bạn cần implement này)
-    const attachment = await Attachment.create({
-      originalFileName: originalname,
-      fileSize: size,
-      bucket: bucketName,
-      contentType: mimetype,
-      key: fileNameInS3,
-      status: "WAITING_CONFIRM",
-      createdAt: new Date(),
-      uploadedAt: new Date(),
-      deletedAt: null,
-    });
-
-    // // Update limit resource
-    const user = await User.findOne({ userId: currentUser.id });
-
-    user.currentUsageResourceMedia += size;
-    user.lastUpdateLimitResourceTime = new Date();
-    await user.save();
-
-    return {
-      success: true,
-      status: 200,
-      message:
-        "Presigned URL generated successfully, using it to upload file for chat",
-      data: {
-        id: attachment._id,
-        uploadUrl: presignedUrl,
-        originalFileName: originalname,
-        fileNameInS3: fileNameInS3,
-        contentType: mimetype,
-        size: `${(size / (1024 * 1024)).toFixed(2)} MB`,
-        method: "PUT",
-        expiresIn: `${Math.floor(
-          S3_CONSTANTS.PRESIGN_URL_UPLOAD_MEDIA_EXPIRE_TIME / 1000 / 60
-        )} minutes`,
-      },
-    };
+      email,
+      fileData,
+      bucketName,
+      body
+    );
   }
 }
 

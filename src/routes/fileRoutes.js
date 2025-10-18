@@ -15,21 +15,17 @@ const upload = multer({
 });
 
 // Upload file endpoint
-router.post("/chat/upload", upload.single("file"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
+router.post("/chat/upload", upload.array("files", 10), async (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: "No files uploaded" });
   }
-  const originalName = req.file.originalname;
-  const fileSize = req.file.size;
-
-  console.log("Original file name:", originalName);
-  console.log("File size (bytes):", fileSize);
-
+  console.log("start-uppppp");
   res.json(
     await uploadFileService.uploadFile(
-      req.file,
+      req.files,
       S3_CONSTANTS.CHAT_MEDIA_BUCKET,
-      req.currentUser
+      req.currentUser.email,
+      req.body
     )
   );
 });
