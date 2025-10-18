@@ -71,7 +71,7 @@ const MessageSchema = new BaseSchema(
     ],
     status: {
       type: String,
-      enum: ["CONFIRMED", "WAITING_CONFIRM", "DELETED"],
+      enum: ["WAITING_CONFIRM", "CONFIRMED", "DELETED"],
       default: "WAITING_CONFIRM",
     },
   },
