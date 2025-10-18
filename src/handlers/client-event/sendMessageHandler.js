@@ -15,6 +15,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
 
       //TODO checkit
       const user = socket.currentUser.user;
+      const userId = new mongoose.Types.ObjectId(user._id);
 
       const conversationId = new mongoose.Types.ObjectId(data.conversationId);
       console.log("conversationId: ", JSON.stringify(conversationId, null, 2));
@@ -33,30 +34,41 @@ const sendMessageHandler = async (socket, socketEventBus) => {
 
       // send message to them
       console.log("participantIds: " + participantIds);
-      const messageWaitingConfirm = await Message.findById(
+      let message = await Message.findById(
         new mongoose.Types.ObjectId(data.messageId)
       );
-      if (!messageWaitingConfirm) {
-        throw new Error(
-          "NOT FOUND MESSAGE WITH ID " + data.messageId + " TO CONFIRM"
-        );
+
+      if (!message) {
+        message = await Message.create({
+          _id: new mongoose.Types.ObjectId(data.messageId),
+          conversationId,
+          senderId: userId,
+          recipients: participantIds.map((recipientId) => {
+            return {
+              userId: recipientId,
+            };
+          }),
+          content: data.content,
+          type: data.messageType,
+          status: "CONFIRMED",
+        });
+      } else {
+        message.status = "CONFIRMED";
+        await message.save();
       }
-      messageWaitingConfirm.status = "CONFIRMED";
-      await messageWaitingConfirm.save();
 
       socket.emit("send_message_response", {
         success: true,
         status: 200,
         message: "Send message successfully",
-        messageId: data.messageId,
+        data: message,
       });
 
       await socketEventBus.publish(
         "emit_message_for_multi_receiver_in_multi_device",
         {
           user,
-          participantIds,
-          ...data,
+          message,
         }
       );
     } catch (error) {
