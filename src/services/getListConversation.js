@@ -55,9 +55,10 @@ const getListConversation = async (req, res) => {
             $gt: skipUntilOffset,
           },
           conversationId: myConversation._id,
+          status: "CONFIRMED",
         })
-        .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
-        .limit(10);
+          .sort({ createdAt: -1 }) // Sắp xếp giảm dần theo thời gian tạo
+          .limit(10);
         console.log("last10Message: ", last10Message);
 
         lastMessages.push(last10Message);
