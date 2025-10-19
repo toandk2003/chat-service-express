@@ -53,6 +53,10 @@ const ConversationSchema = new BaseSchema(
             default: null,
           },
         },
+        isReceiveNoti: {
+          type: Boolean,
+          default: true,
+        },
       },
     ],
     status: {
