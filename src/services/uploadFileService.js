@@ -253,15 +253,18 @@ class UploadFileService {
           ),
         ]);
 
-        console.log("new messageeeee: ", JSON.stringify(messages[0], null, 2));
-
-        return {
+        const response = {
           success: true,
           status: 200,
           message:
             "Presigned URL generated successfully, using it to upload file for chat",
-          data: messages[0],
+          data: {
+            ...messages[0]._doc,
+            attachments,
+          },
         };
+        console.log("response is: ", JSON.stringify(response, null, 2));
+        return response;
       },
       email,
       fileData,

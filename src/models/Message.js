@@ -67,6 +67,10 @@ const MessageSchema = new BaseSchema(
           enum: ["ACTIVE", "INACTIVE"],
           default: "ACTIVE",
         },
+        createdAt: {
+          type: Date,
+          default: new Date(),
+        },
       },
     ],
     status: {
