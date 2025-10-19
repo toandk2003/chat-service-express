@@ -1,5 +1,6 @@
 const { createClient } = require("redis");
 const handleSendMessageToReceiver = require("./handleSendMessageToReceiver");
+const handleSendSeenStatusToReceiver = require("./handleSendSeenStatusToReceiver");
 
 // DON'T TOUCH
 class SocketEventBus {
@@ -8,8 +9,16 @@ class SocketEventBus {
     this.subClient = subClient;
   }
 
+  static instance = null;
+
   static async getInstance() {
     console.log("Initializing SocketEventBus...");
+
+    if (SocketEventBus.instance) {
+      console.log("Returning existing SocketEventBus instance");
+      return SocketEventBus.instance;
+    }
+
     const pubClient = createClient({
       url: process.env.REDIS_URL,
     });
@@ -23,6 +32,8 @@ class SocketEventBus {
     const socketEventBus = new SocketEventBus(pubClient, subClient);
 
     socketEventBus.subcribe();
+    
+    SocketEventBus.instance = socketEventBus;
 
     return socketEventBus;
   }
@@ -49,6 +60,13 @@ class SocketEventBus {
       "emit_message_for_multi_receiver_in_multi_device",
       async (message) => {
         await handleSendMessageToReceiver(JSON.parse(message));
+      }
+    );
+
+    this.subClient.subscribe(
+      "emit_seen_status_for_multi_receiver_in_multi_device",
+      async (message) => {
+        await handleSendSeenStatusToReceiver(JSON.parse(message));
       }
     );
   }

@@ -1,6 +1,7 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
+const SocketEventBus = require("../handlers/socket-event-bus");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
@@ -47,14 +48,27 @@ const getDetailConversationById = async (req, res) => {
     console.log("messages: ", messages);
 
     //update lastReadOffset
-
     if (messages.length > 0) {
       myConversation.lastReadOffset = messages[0]._id;
     }
-    console.log("ourConversation: ", JSON.stringify(ourConversation, null, 2));
-    console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
+    // console.log("ourConversation: ", JSON.stringify(ourConversation, null, 2));
+    // console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
 
-    await ourConversation.save();
+    // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
+    const socketEventBus = await SocketEventBus.getInstance();
+    console.log("✅ Socket Event Bus initialized successfully");
+
+    await Promise.all([
+      ourConversation.save(),
+      socketEventBus.publish(
+        "emit_seen_status_for_multi_receiver_in_multi_device",
+        {
+          user,
+          ourConversation,
+          myConversation,
+        }
+      ),
+    ]);
 
     return res.json({
       ...createPaginateResponse(
