@@ -10,7 +10,7 @@ const mongoose = require("mongoose");
 
 const getDetailConversationById = async (req, res) => {
   try {
-    console.log("\nstart-delete-conversation\n"); // In ra console server
+    console.log("\nstart-get-detail-conversation\n"); // In ra console server
     const { id } = req.params;
     const { pageSize, currentPage } = req.query;
     const limit = +pageSize;

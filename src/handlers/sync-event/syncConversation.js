@@ -19,6 +19,16 @@ const syncConversation = async (data) => {
     if (!secondUser)
       throw new Error("NOT FOUND USER WITH EMAIL: " + secondUserEmail);
 
+    const checkConversation = await Conversation.findOne({
+      type: "private",
+      "participants.userId": { $all: [firstUser._id, secondUser._id] },
+      status: "active", // Only find active conversations
+    });
+    if (checkConversation) {
+      console.log("EXIST CONVERSATION, RETURN");
+      return;
+    }
+
     const [conversation] = await Conversation.insertMany(
       [
         {

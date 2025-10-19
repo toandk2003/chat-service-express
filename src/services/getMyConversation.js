@@ -17,6 +17,25 @@ const getMyConversationByUserIdAndConversationId = async (
   }
 };
 
+const getMyConversationByUserIdAndPartnerId = async (userId, partnerId) => {
+  try {
+    const ourConversation = await Conversation.findOne({
+      type: "private",
+      "participants.userId": { $all: [userId, partnerId] },
+      status: "active", // Only find active conversations
+    });
+
+    const myConversation = ourConversation.participants.find((participant) =>
+      participant.userId.equals(userId)
+    );
+    console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
+    return [ourConversation, myConversation];
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 const getOtherConversationByUserIdAndConversationId = async (
   userId,
   conversationId
@@ -48,4 +67,5 @@ const getOtherConversationByUserIdAndConversationId = async (
 module.exports = {
   getOtherConversationByUserIdAndConversationId,
   getMyConversationByUserIdAndConversationId,
+  getMyConversationByUserIdAndPartnerId,
 };

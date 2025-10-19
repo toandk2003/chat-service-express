@@ -7,10 +7,7 @@ const getDetailConversationByFriend = require("../services/getDetailConversation
 const conversationRoutes = express.Router();
 
 conversationRoutes.get("/conversations", getListConversation);
-conversationRoutes.get(
-  "/conversations/:id/friend-view",
-  getDetailConversationByFriend
-);
+conversationRoutes.get("/conversations/detail", getDetailConversationByFriend);
 conversationRoutes.get("/conversations/:id", getDetailConversationById);
 conversationRoutes.delete("/conversations/:id", deleteConversation);
 
