@@ -14,6 +14,7 @@ const connectDB = require("./src/config/database");
 const fileRoutes = require("./src/routes/fileRoutes");
 const syncConsumer = require("./src/handlers/sync-event");
 const conversationRoutes = require("./src/routes/ConversationRoutes");
+const messageRoutes = require("./src/routes/MessageRoutes");
 
 // console.log = function () {};
 
@@ -57,6 +58,7 @@ const initServer = async () => {
     // Thiết lập các route
     app.use("/", fileRoutes);
     app.use("/", conversationRoutes);
+    app.use("/", messageRoutes);
 
     console.log("✅ Routes set up successfully");
 
