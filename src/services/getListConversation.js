@@ -70,14 +70,21 @@ const getListConversation = async (req, res) => {
     const allRecord = myConversations
       .map((conversation, index) => {
         const last10Message = lastMessages[index];
+
         const lastUpdate =
           last10Message.length > 0
-            ? last10Message[last10Message.length - 1].createdAt
+            ? last10Message[0].createdAt
             : conversation.createdAt;
 
+        conversation.updatedAt = lastUpdate;
         return {
-          ...conversation,
-          last10Message,
+          conversation: {
+            ...conversation,
+            name: conversation.view.name,
+            type: conversationsOfEveryone[index].type,
+            lastMessage: last10Message.length > 0 ? last10Message[0] : null,
+          },
+          messages: [], // de rong cho Long
           lastUpdate,
         };
       })
