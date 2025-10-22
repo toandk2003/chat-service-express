@@ -11,9 +11,7 @@ const STATUS = Object.freeze({
 const REACTION = Object.freeze({
   LIKE: "LIKE",
   TYM: "TYM",
-  UNLIKE: "UNLIKE",
-  ANGRY: "ANGRY",
-  CONFUSED: "CONFUSED",
+  DISLIKE: "DISLIKE",
 });
 
 const MessageSchema = new BaseSchema(

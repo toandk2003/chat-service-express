@@ -21,7 +21,7 @@ const ConversationSchema = new BaseSchema(
         userId: mongoose.Schema.Types.ObjectId,
         unreadMessageNums: {
           type: Number,
-          default: 1,
+          default: 0,
         },
         status: {
           type: String,
