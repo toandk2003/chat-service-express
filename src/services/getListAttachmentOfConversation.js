@@ -41,7 +41,7 @@ const getListAttachmentOfConversation = async (req, res) => {
         },
         conversationId,
         status: "CONFIRMED",
-        type: { $in: ["image", "video", "file"] }, // Using $in operator for multiple possible values
+        type: { $in: ["image", "video", "file", "attachment"] }, // Using $in operator for multiple possible values
       }).sort({ createdAt: -1 }); // Sắp xếp giảm dần theo thời gian tạo
     }
     console.log("messages: ", messages);

@@ -50,7 +50,7 @@ const MessageSchema = new BaseSchema(
     content: String,
     type: {
       type: String,
-      enum: ["text", "image", "video", "file", "notification"],
+      enum: ["text", "attachment", "noti"],
       default: "text",
     },
     attachments: [
