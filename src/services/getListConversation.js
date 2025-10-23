@@ -1,7 +1,9 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
+const createPaginateResponseLong = require("../common/utils/createPaginateResponseLong");
+const convertMessageToLongFormat = require("../common/utils/convertMessageToLongFormat");
+const genPresignURL = require("../services/genPresignURL");
 
 const getListConversation = async (req, res) => {
   try {
@@ -67,39 +69,65 @@ const getListConversation = async (req, res) => {
 
     console.log("lastMessages: ", lastMessages);
 
-    const allRecord = myConversations
-      .map((conversation, index) => {
-        const last10Message = lastMessages[index];
+    const allRecord = [];
+    for (let i = 0; i < myConversations.length; i++) {
+      const conversation = myConversations[i];
+      const index = i;
+      const last10Message = lastMessages[index];
 
-        const lastUpdate =
-          last10Message.length > 0
-            ? last10Message[0].createdAt
-            : conversation.createdAt;
+      const lastUpdate =
+        last10Message.length > 0
+          ? last10Message[0].createdAt
+          : conversation.createdAt;
 
-        conversation.updatedAt = lastUpdate;
-        return {
-          conversation: {
-            ...conversation,
-            name: conversation.view.name,
-            type: conversationsOfEveryone[index].type,
-            lastMessage: last10Message.length > 0 ? last10Message[0] : null,
-          },
-          messages: [], // de rong cho Long
-          lastUpdate,
-        };
-      })
-      // sắp xếp giảm dần theo lastMessageDate
-      .sort((a, b) => b.lastUpdate - a.lastUpdate);
+      conversation.updatedAt = lastUpdate;
+      const lastMessage = last10Message.length > 0 ? last10Message[0] : null;
+
+      const avatarPromises = myConversations[index].view.avatar.map(
+        async (item) => {
+          const profilePic = await genPresignURL(item.value);
+
+          return {
+            user: {
+              _id: item.userId,
+              profilePic,
+            },
+          };
+        }
+      );
+
+      allRecord.push({
+        conversation: {
+          id: conversation._id,
+          name: conversation.view.name,
+          type: conversationsOfEveryone[index].type,
+          lastMessage: await convertMessageToLongFormat(lastMessage),
+          createdAt: conversation.createdAt,
+          updatedAt: conversation.updatedAt,
+        },
+        messages: [], // de rong cho Long
+        users: await Promise.all(avatarPromises),
+        unSeenMessageQuantity: myConversations[index].unreadMessageNums,
+        currentMessagePage: 1, // để là 1 cho Long
+        totalMessagePageQuantity: 1,
+        lastUpdate,
+      });
+    }
+
+    // const allRecord = await Promise.all(promised);
+
+    // sắp xếp giảm dần theo lastMessageDate
+    allRecord.sort((a, b) => b.lastUpdate - a.lastUpdate);
     console.log("allRecord: ", allRecord);
     const total = allRecord.length;
     const limit = +pageSize;
     const offset = +currentPage * +limit;
     const paginatedResults = allRecord.slice(offset, offset + limit);
 
-    const response = createPaginateResponse(
+    const response = createPaginateResponseLong(
       true,
       200,
-      "Here is user's conversation.",
+      "",
       currentPage,
       pageSize,
       total,
