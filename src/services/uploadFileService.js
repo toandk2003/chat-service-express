@@ -221,7 +221,6 @@ class UploadFileService {
 
         // get all receiver
         const participantIds = conversation.participants
-          // .filter((participant) => !participant.userId.equals(userId))
           .map((participant) => participant.userId);
 
         // send message to them

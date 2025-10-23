@@ -29,7 +29,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
 
       // get all receiver TODO fix it
       const participantIds = conversation.participants
-        .filter((participant) => !participant.userId.equals(userId))
+        // .filter((participant) => !participant.userId.equals(userId))
         .map((participant) => participant.userId);
 
       // send message to them
