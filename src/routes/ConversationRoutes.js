@@ -9,7 +9,7 @@ const updateConversation = require("../services/updateConversation ");
 const conversationRoutes = express.Router();
 
 conversationRoutes.get(
-  "/conversations/view-friend",
+  "/conversations/detail",
   getDetailConversationByFriend
 );
 

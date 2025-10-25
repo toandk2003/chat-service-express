@@ -1,12 +1,12 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
 const SocketEventBus = require("../handlers/socket-event-bus");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
 const mongoose = require("mongoose");
 const convertMessageToLongFormat = require("../common/utils/convertMessageToLongFormat");
+const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
 
 const getDetailConversationById = async (req, res) => {
   try {
@@ -93,14 +93,12 @@ const getDetailConversationById = async (req, res) => {
             updatedAt: ourConversation.updatedAt,
             __v: ourConversation.__v,
           },
-          seenBy: [
-            ourConversation.participants.map((participant) => {
-              return {
-                userId: participant.userId,
-                messageId: participant.lastReadOffset,
-              };
-            }),
-          ],
+          seenBy: ourConversation.participants.map((participant) => {
+            return {
+              userId: participant.userId,
+              messageId: participant.lastReadOffset,
+            };
+          }),
           messages: await Promise.all(
             messages
               .slice(skip, Math.min(skip + limit, messages.length))
@@ -109,6 +107,11 @@ const getDetailConversationById = async (req, res) => {
               })
           ),
         },
+        users: await Promise.all(
+          ourConversation.participants.map((participant) => {
+            return convertUserToLongFormat(participant.userId);
+          })
+        ),
         pagination: {
           currentPage: +currentPage,
           pageSize: +pageSize,
