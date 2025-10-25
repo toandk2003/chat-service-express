@@ -1,12 +1,12 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
-const Conversation = require("../models/Conversation");
 const SocketEventBus = require("../handlers/socket-event-bus");
 const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
 const mongoose = require("mongoose");
+const convertMessageToLongFormat = require("../common/utils/convertMessageToLongFormat");
 
 const getDetailConversationById = async (req, res) => {
   try {
@@ -69,19 +69,53 @@ const getDetailConversationById = async (req, res) => {
         }
       ),
     ]);
-
     return res.json({
-      ...createPaginateResponse(
-        true,
-        200,
-        "Here is your detail conversation",
-        currentPage,
-        pageSize,
-        messages.length,
-        messages.slice(skip, Math.min(skip + limit, messages.length))
-      ),
-      myConversation,
-      ourConversation,
+      success: true,
+      status: 200,
+      message: "Here is your detail conversation",
+      data: {
+        conversation: {
+          _id: ourConversation._id,
+          name: myConversation.view.name,
+          type: ourConversation.type,
+          createdAt: ourConversation.createdAt,
+          updatedAt: ourConversation.updatedAt,
+          __v: myConversation.__v,
+          settings: {
+            _id: null,
+            userId: user._id,
+            conversationId: ourConversation._id,
+            getNotifications: myConversation.isReceiveNoti,
+            isPinned: false,
+            language: myConversation.language,
+            translatedTo: myConversation.translatedTo,
+            createdAt: ourConversation.createdAt,
+            updatedAt: ourConversation.updatedAt,
+            __v: ourConversation.__v,
+          },
+          seenBy: [
+            ourConversation.participants.map((participant) => {
+              return {
+                userId: participant.userId,
+                messageId: participant.lastReadOffset,
+              };
+            }),
+          ],
+          messages: await Promise.all(
+            messages
+              .slice(skip, Math.min(skip + limit, messages.length))
+              .map(async (message) => {
+                return await convertMessageToLongFormat(message);
+              })
+          ),
+        },
+        pagination: {
+          currentPage: +currentPage,
+          pageSize: +pageSize,
+          totalItems: +messages.length,
+          totalPages: +Math.ceil(messages.length / pageSize),
+        },
+      },
     });
   } catch (error) {
     console.error(error);

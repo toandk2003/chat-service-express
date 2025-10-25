@@ -57,6 +57,14 @@ const ConversationSchema = new BaseSchema(
           type: Boolean,
           default: true,
         },
+        language: {
+          type: Number,
+          default: 1,
+        },
+        translatedTo: {
+          type: Number,
+          default: 1,
+        },
       },
     ],
     status: {

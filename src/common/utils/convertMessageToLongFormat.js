@@ -39,7 +39,7 @@ const getFullInfoAttachment = async (attachments) => {
     files = [];
   for (let i = 0; i < attachments.length; i++) {
     const attachment = attachments[i];
-    attachment.presignURL = await genPresignURL(attachment.key);
+    attachment._doc.presignURL = await genPresignURL(attachment.key);
 
     if (
       attachment.contentType === "image/jpeg" ||
