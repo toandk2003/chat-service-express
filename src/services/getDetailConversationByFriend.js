@@ -82,6 +82,13 @@ const getDetailConversationByFriend = async (req, res) => {
       ),
     ]);
 
+    const keyMemberIds = ourConversation.participants
+      .filter((participant) =>
+        participant.userId.equals(ourConversation.leaderId)
+      )
+      .map((participant) => participant.userId);
+    const keyMemberId = keyMemberIds.length > 0 ? keyMemberIds[0] : null;
+
     return res.json({
       success: true,
       status: 200,
@@ -120,8 +127,10 @@ const getDetailConversationByFriend = async (req, res) => {
               })
           ),
           users: await Promise.all(
-            ourConversation.participants.map((participant) => {
-              return convertUserToLongFormat(participant.userId);
+            ourConversation.participants.map(async (participant) => {
+              const res = await convertUserToLongFormat(participant.userId);
+              res.isKeyMember = participant.userId.equals(keyMemberId);
+              return res;
             })
           ),
         },

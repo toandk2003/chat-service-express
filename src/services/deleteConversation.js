@@ -1,7 +1,4 @@
 const { User } = require("../models/User");
-const { Message } = require("../models/Message");
-const Conversation = require("../models/Conversation");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
