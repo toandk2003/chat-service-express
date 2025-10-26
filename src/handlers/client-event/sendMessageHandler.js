@@ -57,12 +57,14 @@ const sendMessageHandler = async (socket, socketEventBus) => {
         await message.save();
       }
 
+      const response = await convertMessageToLongFormat(message);
+
       socket.emit("send_message_response", {
         success: true,
         status: 200,
         message: "Send message successfully",
         data: {
-          ...(await convertMessageToLongFormat(message)),
+          ...response,
           reactions: {
             // 100 % data nay, khong can query
             total: {
@@ -82,8 +84,26 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       await socketEventBus.publish(
         "emit_message_for_multi_receiver_in_multi_device",
         {
-          user,
-          message,
+          messageEntity: message,
+          success: true,
+          status: 200,
+          message: "Send message successfully",
+          data: {
+            ...response,
+            reactions: {
+              // 100 % data nay, khong can query
+              total: {
+                like: [],
+                dislike: [],
+                heart: [],
+              },
+              my: {
+                like: 0,
+                dislike: 0,
+                heart: 0,
+              },
+            },
+          },
         }
       );
     } catch (error) {
