@@ -33,8 +33,28 @@ const deleteConversation = async (req, res) => {
     return res.json({
       success: true,
       status: 200,
-      message: "Delete conversation successfully",
-      conversationId,
+      message: "",
+      data: {
+        conversation: {
+          conversation: {
+            _id: ourConversation._id,
+            name: myConversation.view.name,
+            type: ourConversation.type,
+            createdAt: ourConversation.createdAt,
+            updatedAt: ourConversation.updatedAt,
+            __v: ourConversation.__v,
+            lastMessage: null,
+            settings: null,
+          },
+          users: ourConversation.participants.map((participant) => {
+            return {
+              user: {
+                _id: participant.userId,
+              },
+            };
+          }),
+        },
+      },
     });
   } catch (error) {
     console.error(error);
