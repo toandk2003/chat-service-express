@@ -10,9 +10,9 @@ const mongoose = require("mongoose");
 const updateConversation = async (req, res) => {
   try {
     console.log("\nstart-update-conversation\n"); // In ra console server
-    const { id } = req.params;
-    const { isReceiveNoti } = req.body;
-    const conversationId = new mongoose.Types.ObjectId(id);
+    const { conversationId } = req.params;
+    const { getNotifications, language, translatedTo } = req.body;
+    const convId = new mongoose.Types.ObjectId(conversationId);
     const email = req.currentUser.email;
     console.log("email: " + email);
 
@@ -22,12 +22,20 @@ const updateConversation = async (req, res) => {
 
     const userId = user._id;
     const [ourConversation, myConversation] =
-      await getMyConversationByUserIdAndConversationId(userId, conversationId);
+      await getMyConversationByUserIdAndConversationId(userId, convId);
 
     console.log("myConversation: ", myConversation);
 
-    if (isReceiveNoti === true || isReceiveNoti === false) {
-      myConversation.isReceiveNoti = isReceiveNoti;
+    if (getNotifications === true || getNotifications === false) {
+      myConversation.isReceiveNoti = getNotifications;
+    }
+
+    if (language !== null && language !== undefined) {
+      myConversation.language = language;
+    }
+
+    if (translatedTo !== null && translatedTo !== undefined) {
+      myConversation.translatedTo = translatedTo;
     }
 
     await ourConversation.save();
@@ -35,8 +43,24 @@ const updateConversation = async (req, res) => {
     return res.json({
       success: true,
       status: 200,
-      message: "Update conversation successfully",
-      conversation: { ...ourConversation._doc },
+      message: "",
+      data: {
+        conversation: {
+          _id: ourConversation._id,
+          settings: {
+            _id: ourConversation._id,
+            userId: user._id,
+            conversationId: ourConversation._id,
+            getNotifications: myConversation.isReceiveNoti,
+            isPinned: false,
+            language: myConversation.language,
+            translateTo: myConversation.translatedTo,
+            createdAt: ourConversation.createdAt,
+            updatedAt: ourConversation.updatedAt,
+            __v: ourConversation.__v,
+          },
+        },
+      },
     });
   } catch (error) {
     console.error(error);

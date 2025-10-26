@@ -21,6 +21,6 @@ conversationRoutes.get(
 conversationRoutes.get("/conversations", getListConversation);
 conversationRoutes.get("/conversations/:id", getDetailConversationById);
 conversationRoutes.delete("/conversations/:id", deleteConversation);
-conversationRoutes.put("/conversations/:id", updateConversation);
+conversationRoutes.put("/conversations/:conversationId", updateConversation);
 
 module.exports = conversationRoutes;
