@@ -1,6 +1,5 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
-const SocketEventBus = require("../handlers/socket-event-bus");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
@@ -55,20 +54,8 @@ const getDetailConversationById = async (req, res) => {
     // console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
 
     // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
-    const socketEventBus = await SocketEventBus.getInstance();
-    console.log("✅ Socket Event Bus initialized successfully");
 
-    await Promise.all([
-      ourConversation.save(),
-      socketEventBus.publish(
-        "emit_seen_status_for_multi_receiver_in_multi_device",
-        {
-          user,
-          ourConversation,
-          myConversation,
-        }
-      ),
-    ]);
+    
     const keyMemberIds = ourConversation.participants
       .filter((participant) =>
         participant.userId.equals(ourConversation.leaderId)
