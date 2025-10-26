@@ -4,6 +4,7 @@ const createPaginateResponse = require("../common/utils/createPaginateResponse")
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
+const genPresignURL = require("./genPresignURL");
 const mongoose = require("mongoose");
 
 const getListAttachmentOfConversation = async (req, res) => {
@@ -46,9 +47,17 @@ const getListAttachmentOfConversation = async (req, res) => {
     }
     console.log("messages: ", messages);
     const attachments = [];
-    messages.forEach((message) => {
-      attachments.push(...message.attachments);
-    });
+
+    for (const message of messages) {
+      const promises = message.attachments.map(async (attachment) => {
+        const presignURL = await genPresignURL(attachment.key);
+        attachment._doc.presignURL = presignURL;
+        return attachment; // trả lại attachment đã cập nhật
+      });
+
+      const updatedAttachments = await Promise.all(promises);
+      attachments.push(...updatedAttachments);
+    }
 
     return res.json(
       createPaginateResponse(
@@ -71,4 +80,33 @@ const getListAttachmentOfConversation = async (req, res) => {
     });
   }
 };
+
+const getFullInfoAttachment = async (attachments) => {
+  const images = [],
+    videos = [],
+    files = [];
+  for (let i = 0; i < attachments.length; i++) {
+    const attachment = attachments[i];
+    attachment._doc.presignURL = await genPresignURL(attachment.key);
+
+    if (
+      attachment.contentType === "image/jpeg" ||
+      attachment.contentType === "image/jpg" ||
+      attachment.contentType === "image/png" ||
+      attachment.contentType === "image/gif" ||
+      attachment.contentType === "image/webp"
+    ) {
+      images.push(attachment);
+    } else if (
+      attachment.contentType === "video/mp4" ||
+      attachment.contentType === "video/quicktime" ||
+      attachment.contentType === "video/x-msvideo" ||
+      attachment.contentType === "video/webm"
+    ) {
+      videos.push(attachment);
+    } else files.push(attachment);
+  }
+  return [images, videos, files];
+};
+
 module.exports = getListAttachmentOfConversation;
