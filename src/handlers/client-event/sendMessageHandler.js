@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Conversation = require("../../models/Conversation");
 const { Message } = require("../../models/Message");
-
+const convertMessageToLongFormat = require("../../common/utils/convertMessageToLongFormat");
 const sendMessageHandler = async (socket, socketEventBus) => {
   // Lắng nghe sự kiện 'send_message' từ client
   socket.on("send_message", async (message) => {
@@ -61,7 +61,22 @@ const sendMessageHandler = async (socket, socketEventBus) => {
         success: true,
         status: 200,
         message: "Send message successfully",
-        data: message,
+        data: {
+          ...(await convertMessageToLongFormat(message)),
+          reactions: {
+            // 100 % data nay, khong can query
+            total: {
+              like: [],
+              dislike: [],
+              heart: [],
+            },
+            my: {
+              like: 0,
+              dislike: 0,
+              heart: 0,
+            },
+          },
+        },
       });
 
       await socketEventBus.publish(
