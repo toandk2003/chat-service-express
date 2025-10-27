@@ -14,7 +14,7 @@ const ConversationSchema = new BaseSchema(
       ref: "users",
       default: null,
     },
-    maxMember: { type: Number, default: 2 },
+    maxMember: { type: Number, default: 20 },
     currentMember: { type: Number, default: 2 },
     participants: [
       {

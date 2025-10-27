@@ -12,7 +12,8 @@ const reactionMessage = async (req, res) => {
     console.log("\nstart-update-message\n"); // In ra console server
     const { id } = req.params;
     const messageId = new mongoose.Types.ObjectId(id);
-    const { reaction } = req.body;
+    const { type } = req.body;
+    const reaction = type;
     const email = req.currentUser.email;
     console.log("email: " + email);
 
