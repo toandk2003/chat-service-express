@@ -24,6 +24,28 @@ const getMyConversationByUserIdAndConversationId = async (
   }
 };
 
+const getMyConversationFromOurConversation = async (
+  ourConversation,
+  userId
+) => {
+  try {
+    const myConversation = ourConversation.participants.find((participant) =>
+      participant.userId.equals(userId)
+    );
+    if (!ourConversation || !myConversation)
+      throw new Error(
+        "NO EXISTS CONVERSATION WITH USERID AND CONVERSATIONID = " +
+          userId +
+          ", "
+      );
+    console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
+    return [ourConversation, myConversation];
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 const getMyConversationByUserIdAndPartnerId = async (userId, partnerId) => {
   try {
     const ourConversation = await Conversation.findOne({
@@ -89,4 +111,5 @@ module.exports = {
   getOtherConversationByUserIdAndConversationId,
   getMyConversationByUserIdAndConversationId,
   getMyConversationByUserIdAndPartnerId,
+  getMyConversationFromOurConversation,
 };

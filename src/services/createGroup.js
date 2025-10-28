@@ -3,16 +3,18 @@ const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const mongoose = require("mongoose");
 const withTransactionThrow = require("../common/utils/withTransactionThrow");
+const { getMyConversationFromOurConversation } = require("./getMyConversation");
+const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
 const createGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
       console.log("\nstart-create-group\n"); // In ra console server
       const { name, memberIds } = req.body;
 
-      if (memberIds.length) {
+      if (!memberIds.length) {
         throw new Error("memberIds must be array");
       }
-
+      //TODO remove toLowerCase
       const email = req.currentUser.email;
       console.log("email: " + email);
       const user = await User.findOne({ email, status: "ACTIVE" });
@@ -21,7 +23,13 @@ const createGroup = async (req, res) => {
 
       const users = await Promise.all(
         memberIds.map(async (memberId) => {
-          return await User.findById(new mongoose.Types.ObjectId(memberId));
+          const res = await User.findById(
+            new mongoose.Types.ObjectId(memberId)
+          );
+
+          if (!res) throw new Error("USER NOT FOUND WITH ID: " + memberId);
+
+          return res;
         })
       );
 
@@ -61,10 +69,7 @@ const createGroup = async (req, res) => {
       // get response
       const conversationId = conversation._id;
       const [ourConversation, myConversation] =
-        await getMyConversationByUserIdAndConversationId(
-          userId,
-          conversationId
-        );
+        await getMyConversationFromOurConversation(conversation, userId);
 
       if (!myConversation)
         throw new Error("CONVERSATION NOT FOUND WITH ID: " + conversationId);
@@ -110,6 +115,7 @@ const createGroup = async (req, res) => {
             type: ourConversation.type,
             createdAt: ourConversation.createdAt,
             updatedAt: ourConversation.updatedAt,
+            lastMessage: null,
             __v: myConversation.__v,
             settings: {
               _id: null,
@@ -129,13 +135,7 @@ const createGroup = async (req, res) => {
                 messageId: participant.lastReadOffset,
               };
             }),
-            messages: await Promise.all(
-              messages
-                .slice(skip, Math.min(skip + limit, messages.length))
-                .map(async (message) => {
-                  return await convertMessageToLongFormat(message);
-                })
-            ),
+            messages: [],
           },
           isNewCreated: myConversation.status === "initial" ? true : false,
           users: await Promise.all(
@@ -146,10 +146,10 @@ const createGroup = async (req, res) => {
             })
           ),
           pagination: {
-            currentPage: +currentPage,
-            pageSize: +pageSize,
-            totalItems: +messages.length,
-            totalPages: +Math.ceil(messages.length / pageSize),
+            currentPage: 0,
+            pageSize: 10,
+            totalItems: 0,
+            totalPages: 0,
           },
         },
       });

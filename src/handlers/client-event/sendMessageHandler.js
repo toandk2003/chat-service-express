@@ -13,7 +13,6 @@ const sendMessageHandler = async (socket, socketEventBus) => {
     try {
       console.log("currentUser: ", JSON.stringify(socket.currentUser, null, 2));
 
-      //TODO checkit
       const user = socket.currentUser.user;
       const userId = new mongoose.Types.ObjectId(user._id);
 
@@ -27,7 +26,6 @@ const sendMessageHandler = async (socket, socketEventBus) => {
         throw new Error(`Conversation with id: ${conversationId} dont exists.`);
       console.log("conversation: ", JSON.stringify(conversation, null, 2));
 
-      // get all receiver TODO fix it
       const participantIds = conversation.participants
         // .filter((participant) => !participant.userId.equals(userId))
         .map((participant) => participant.userId);

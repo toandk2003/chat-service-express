@@ -15,6 +15,7 @@ const fileRoutes = require("./src/routes/fileRoutes");
 const syncConsumer = require("./src/handlers/sync-event");
 const conversationRoutes = require("./src/routes/ConversationRoutes");
 const messageRoutes = require("./src/routes/MessageRoutes");
+const groupRoutes = require("./src/routes/groupRoutes");
 
 // console.log = function () {};
 
@@ -59,6 +60,7 @@ const initServer = async () => {
     app.use("/", fileRoutes);
     app.use("/", conversationRoutes);
     app.use("/", messageRoutes);
+    app.use("/", groupRoutes);
 
     console.log("✅ Routes set up successfully");
 
