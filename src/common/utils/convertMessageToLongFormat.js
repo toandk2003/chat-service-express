@@ -1,6 +1,8 @@
 const { User } = require("../../models/User");
 const genPresignURL = require("../../services/genPresignURL");
 const convertMessageToLongFormat = async (message) => {
+  if (!message) return null;
+
   const [sender, attachments] = await Promise.all([
     User.findOne(message.senderId),
     getFullInfoAttachment(message.attachments),

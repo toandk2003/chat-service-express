@@ -55,7 +55,6 @@ const getDetailConversationById = async (req, res) => {
 
     // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
 
-    
     const keyMemberIds = ourConversation.participants
       .filter((participant) =>
         participant.userId.equals(ourConversation.leaderId)
@@ -101,6 +100,7 @@ const getDetailConversationById = async (req, res) => {
               })
           ),
         },
+        isNewCreated: myConversation.status === "initial" ? true : false,
         users: await Promise.all(
           ourConversation.participants.map(async (participant) => {
             const res = await convertUserToLongFormat(participant.userId);

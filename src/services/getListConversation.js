@@ -105,6 +105,7 @@ const getListConversation = async (req, res) => {
           createdAt: conversation.createdAt,
           updatedAt: conversation.updatedAt,
         },
+        isNewCreated: myConversation.status === "initial" ? true : false,
         messages: [], // de rong cho Long
         users: await Promise.all(avatarPromises),
         unSeenMessageQuantity: myConversations[index].unreadMessageNums,

@@ -54,7 +54,7 @@ const updateConversation = async (req, res) => {
             getNotifications: myConversation.isReceiveNoti,
             isPinned: false,
             language: myConversation.language,
-            translateTo: myConversation.translatedTo,
+            translatedTo: myConversation.translatedTo,
             createdAt: ourConversation.createdAt,
             updatedAt: ourConversation.updatedAt,
             __v: ourConversation.__v,
