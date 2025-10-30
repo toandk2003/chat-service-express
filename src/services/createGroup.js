@@ -135,9 +135,9 @@ const createGroup = async (req, res) => {
                 messageId: participant.lastReadOffset,
               };
             }),
-            messages: [],
           },
-          isNewCreated: myConversation.status === "initial" ? true : false,
+          isNewCreated: false,
+          messages: [],
           users: await Promise.all(
             ourConversation.participants.map(async (participant) => {
               const res = await convertUserToLongFormat(participant.userId);
