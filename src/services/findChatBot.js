@@ -18,10 +18,12 @@ const findChatBot = async (req, res) => {
       leaderId: user._id,
     });
 
+    let isNewCreated = false;
+
     if (!ourConversation) {
       await withTransactionThrow(async (session, data) => {
         console.log("creating bot conversation.....");
-        const secondUserEmail = "fakeUser4@gmail.com";
+        const secondUserEmail = "ChatBot@gmail.com";
         const secondUser = await User.findOne({ email: secondUserEmail });
 
         if (!user) throw new Error("NOT FOUND USER WITH EMAIL: " + email);
@@ -73,13 +75,16 @@ const findChatBot = async (req, res) => {
           user.save({ session }),
           secondUser.save({ session }),
         ]);
+        isNewCreated = true;
         ourConversation = conversation;
       });
     }
 
     req.params.id = ourConversation._id.toString();
+    const response = await getDetailConversationById(req, res);
+    response.data.isNewCreated = isNewCreated;
 
-    return await getDetailConversationById(req, res);
+    return response;
   } catch (error) {
     console.error(error);
     res.json({

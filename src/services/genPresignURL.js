@@ -8,7 +8,7 @@ const genPresignURL = async (Key) => {
   if (!Key) throw new Error("Key S3 IS MISSING");
   const s3Client = s3Config.getS3Client();
   const getObjectCommand = new GetObjectCommand({
-    Bucket: S3_CONSTANTS.CHAT_MEDIA_BUCKET,
+    Bucket: S3_CONSTANTS.AVATAR_PRIVATE_BUCKET,
     Key,
   });
 

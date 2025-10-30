@@ -100,7 +100,7 @@ const getDetailConversationById = async (req, res) => {
               })
           ),
         },
-        isNewCreated: myConversation.status === "initial" ? true : false,
+        isNewCreated: false,
         users: await Promise.all(
           ourConversation.participants.map(async (participant) => {
             const res = await convertUserToLongFormat(participant.userId);
