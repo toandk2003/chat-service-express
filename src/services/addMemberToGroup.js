@@ -3,17 +3,22 @@ const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
 const mongoose = require("mongoose");
 const withTransactionThrow = require("../common/utils/withTransactionThrow");
-const { getMyConversationFromOurConversation } = require("./getMyConversation");
+const {
+  getMyConversationByUserIdAndConversationId,
+} = require("./getMyConversation");
 const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
-const createGroup = async (req, res) => {
+const addMemberToGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
       console.log("\nstart-create-group\n"); // In ra console server
-      const { name, memberIds } = req.body;
+      const { memberIds } = req.body;
+      const { id } = req.params;
+      const conversationId = new mongoose.Types.ObjectId(id);
 
       if (!memberIds.length) {
         throw new Error("memberIds must be array");
       }
+
       //TODO remove toLowerCase
       const email = req.currentUser.email;
       console.log("email: " + email);
@@ -33,46 +38,45 @@ const createGroup = async (req, res) => {
         })
       );
 
-      const [conversation] = await Conversation.insertMany(
-        [
-          {
-            type: "group",
-            leaderId: userId,
-            currentMember: memberIds.length,
-            participants: users.map((user) => {
+      // get response
+      const [ourConversation, myConversation] =
+        await getMyConversationByUserIdAndConversationId(
+          userId,
+          conversationId
+        );
+
+      if (!ourConversation || !myConversation)
+        throw new Error("CONVERSATION NOT FOUND WITH ID: " + conversationId);
+
+      if (!ourConversation.leaderId.equals(userId)) {
+        throw new Error(
+          "YOU ARE NOT LEADER OF CONVERSATION WITH ID: " + conversationId
+        );
+      }
+
+      if (ourConversation.currentMember + memberIds > ourConversation.maxMember)
+        throw new Error(
+          "CONVERSATION IS FULL WITH " + ourConversation.maxMember + " members"
+        );
+
+      ourConversation.currentMember += memberIds.length;
+
+      const membersToAdd = users.map((user) => {
+        return {
+          userId: user._id,
+          view: {
+            name: myConversation.view.name,
+            avatar: users.slice(0, 3).map((user) => {
               return {
                 userId: user._id,
-                view: {
-                  name: name,
-                  avatar: users.slice(0, 3).map((user) => {
-                    return {
-                      userId: user._id,
-                      value: user.avatar,
-                    };
-                  }),
-                  bucket: user.bucket,
-                },
+                value: user.avatar,
               };
             }),
+            bucket: user.bucket,
           },
-        ],
-        { session }
-      );
-
-      await Promise.all(
-        users.map(async (user) => {
-          user.conversations.push({ _id: conversation._id });
-          await user.save({ session });
-        })
-      );
-
-      // get response
-      const conversationId = conversation._id;
-      const [ourConversation, myConversation] =
-        await getMyConversationFromOurConversation(conversation, userId);
-
-      if (!myConversation)
-        throw new Error("CONVERSATION NOT FOUND WITH ID: " + conversationId);
+        };
+      });
+      ourConversation.participants.add(...membersToAdd);
 
       const skipUntilOffset = myConversation.skipUntilOffset;
       let messages = [];
@@ -152,4 +156,4 @@ const createGroup = async (req, res) => {
   );
 };
 
-module.exports = createGroup;
+module.exports = addMemberToGroup;
