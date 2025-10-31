@@ -92,15 +92,15 @@ const getDetailConversationById = async (req, res) => {
               messageId: participant.lastReadOffset,
             };
           }),
-          messages: await Promise.all(
-            messages
-              .slice(skip, Math.min(skip + limit, messages.length))
-              .map(async (message) => {
-                return await convertMessageToLongFormat(message);
-              })
-          ),
         },
         isNewCreated: false,
+        messages: await Promise.all(
+          messages
+            .slice(skip, Math.min(skip + limit, messages.length))
+            .map(async (message) => {
+              return await convertMessageToLongFormat(message);
+            })
+        ),
         users: await Promise.all(
           ourConversation.participants.map(async (participant) => {
             const res = await convertUserToLongFormat(participant.userId);

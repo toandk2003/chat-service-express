@@ -125,7 +125,6 @@ const getDetailConversationByFriend = async (req, res) => {
           })
         ),
         isNewCreated: myConversation.status === "initial" ? true : false,
-
         pagination: {
           currentPage: +currentPage,
           pageSize: +pageSize,
