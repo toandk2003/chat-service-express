@@ -1,9 +1,9 @@
 const joinRoom = (socket, room) => {
-  if (!socket.rooms.has(room)) {
+  try {
     socket.join(room);
     console.log(`Socket join room successfully: ${room}`);
-  } else {
-    console.log("Socket đã ở trong room:", room);
+  } catch (e) {
+    console.log(e);
   }
 };
 
