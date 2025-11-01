@@ -62,7 +62,7 @@ const getDetailConversationByFriend = async (req, res) => {
     if (messages.length > 0) {
       myConversation.lastReadOffset = messages[0]._id;
     }
-    const isNewCreated = false;
+    let isNewCreated = false;
 
     if (myConversation.status === "invisible") {
       myConversation.status = "initial";
