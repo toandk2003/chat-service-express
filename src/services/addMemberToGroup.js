@@ -55,7 +55,7 @@ const addMemberToGroup = async (req, res) => {
       }
 
       if (
-        ourConversation.currentMember + memberEmails >
+        ourConversation.currentMember + memberEmails.length >
         ourConversation.maxMember
       )
         throw new Error(

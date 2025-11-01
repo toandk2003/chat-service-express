@@ -2,7 +2,7 @@ const { User } = require("../models/User");
 const Conversation = require("../models/Conversation");
 const withTransactionThrow = require("../common/utils/withTransactionThrow");
 const getDetailConversationById = require("./getDetailConversationById");
-
+const { getMyConversationByLeaderId } = require("./getMyConversation");
 const findChatBot = async (req, res) => {
   try {
     console.log("\nstart-find chat bot\n"); // In ra console server
@@ -13,10 +13,10 @@ const findChatBot = async (req, res) => {
     console.log("user: ", user);
 
     const userId = user._id;
-    let ourConversation = await Conversation.findOne({
-      type: "bot",
-      leaderId: user._id,
-    });
+
+    const [ourConversation, myConversation] = await getMyConversationByLeaderId(
+      userId
+    );
 
     let isNewCreated = false;
 
@@ -78,8 +78,13 @@ const findChatBot = async (req, res) => {
         isNewCreated = true;
         ourConversation = conversation;
       });
+    } else {
+      if (myConversation.status === "invisible") {
+        myConversation.status = "initial";
+        isNewCreated = true;
+        await ourConversation.save();
+      }
     }
-
     req.params.id = ourConversation._id.toString();
     const response = await getDetailConversationById(req, res, isNewCreated);
     // response.data.isNewCreated = isNewCreated;
