@@ -31,14 +31,13 @@ const getMyConversationByLeaderId = async (leaderId) => {
       type: "bot",
     });
     const myConversation = ourConversation.participants.find((participant) =>
-      participant.userId.equals(userId)
+      participant.userId.equals(leaderId)
     );
     if (!ourConversation || !myConversation)
       throw new Error(
         "NO EXISTS CONVERSATION WITH USERID AND CONVERSATIONID = " +
           userId +
-          ", " +
-          conversationId
+          ", "
       );
     console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
     return [ourConversation, myConversation];
