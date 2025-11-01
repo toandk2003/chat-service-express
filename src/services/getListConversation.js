@@ -21,9 +21,11 @@ const getListConversation = async (req, res) => {
     const userId = user._id;
 
     const conversationsOfEveryone = await Promise.all(
-      user.conversations.map(async (_id) => {
-        return await Conversation.findById(_id).lean();
-      })
+      user.conversations
+        .map(async (_id) => {
+          return await Conversation.findById(_id).lean();
+        })
+        .filter((item) => item !== null && item !== undefined)
     );
 
     console.log("conversationsOfEveryone: ", conversationsOfEveryone);
