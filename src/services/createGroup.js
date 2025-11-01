@@ -106,6 +106,8 @@ const createGroup = async (req, res) => {
             _id: ourConversation._id,
             name: myConversation.view.name,
             status: myConversation.status,
+            currentMember: ourConversation.currentMember,
+            maxMember: ourConversation.maxMember,
             type: ourConversation.type,
             createdAt: ourConversation.createdAt,
             updatedAt: ourConversation.updatedAt,
@@ -130,7 +132,7 @@ const createGroup = async (req, res) => {
               };
             }),
           },
-          isNewCreated: false,
+          isNewCreated: true,
           messages: [],
           users: await Promise.all(
             ourConversation.participants.map(async (participant) => {

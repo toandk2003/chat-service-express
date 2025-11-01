@@ -38,7 +38,7 @@ const addMemberToGroup = async (req, res) => {
         })
       );
 
-      // get response
+      // get responsemaxMember
       const [ourConversation, myConversation] =
         await getMyConversationByUserIdAndConversationId(
           userId,
@@ -79,7 +79,7 @@ const addMemberToGroup = async (req, res) => {
           },
         };
       });
-      ourConversation.participants.add(...membersToAdd);
+      ourConversation.participants.push(...membersToAdd);
 
       const skipUntilOffset = myConversation.skipUntilOffset;
       let messages = [];
@@ -103,7 +103,14 @@ const addMemberToGroup = async (req, res) => {
       // console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
 
       // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
-
+      await ourConversation.save({ session });
+      await Promise.all(
+        users.map(async (user) => {
+          user.conversations.push({ _id: ourConversation._id });
+          await user.save({ session });
+        })
+      );
+      console.log("dddd: ", "ourConversation.currentMember");
       return res.json({
         success: true,
         status: 200,
@@ -113,6 +120,9 @@ const addMemberToGroup = async (req, res) => {
             _id: ourConversation._id,
             name: myConversation.view.name,
             status: myConversation.status,
+            type: ourConversation.type,
+            currentMember: ourConversation.currentMember,
+            maxMember: ourConversation.maxMember,
             type: ourConversation.type,
             createdAt: ourConversation.createdAt,
             updatedAt: ourConversation.updatedAt,
