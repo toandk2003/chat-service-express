@@ -9,10 +9,10 @@ const createGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
       console.log("\nstart-create-group\n"); // In ra console server
-      const { name, memberIds } = req.body;
+      const { name, memberEmails } = req.body;
 
-      if (!memberIds.length) {
-        throw new Error("memberIds must be array");
+      if (!memberEmails.length) {
+        throw new Error("memberEmails must be array");
       }
       //TODO remove toLowerCase
       const email = req.currentUser.email;
@@ -22,10 +22,10 @@ const createGroup = async (req, res) => {
       const userId = user._id;
 
       const users = await Promise.all(
-        memberIds.map(async (memberId) => {
-          const res = await User.findById(
-            new mongoose.Types.ObjectId(memberId)
-          );
+        memberEmails.map(async (email) => {
+          const res = await User.findOne({
+            email,
+          });
 
           if (!res) throw new Error("USER NOT FOUND WITH ID: " + memberId);
 
@@ -38,7 +38,7 @@ const createGroup = async (req, res) => {
           {
             type: "group",
             leaderId: userId,
-            currentMember: memberIds.length,
+            currentMember: memberEmails.length,
             participants: users.map((user) => {
               return {
                 userId: user._id,

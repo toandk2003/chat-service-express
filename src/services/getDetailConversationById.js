@@ -7,7 +7,7 @@ const mongoose = require("mongoose");
 const convertMessageToLongFormat = require("../common/utils/convertMessageToLongFormat");
 const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
 
-const getDetailConversationById = async (req, res) => {
+const getDetailConversationById = async (req, res, isNewCreatedReal) => {
   try {
     console.log("\nstart-get-detail-conversation\n"); // In ra console server
     const { id } = req.params;
@@ -93,7 +93,10 @@ const getDetailConversationById = async (req, res) => {
             };
           }),
         },
-        isNewCreated: false,
+        isNewCreated:
+          isNewCreatedReal === null || isNewCreatedReal === undefined
+            ? false
+            : isNewCreatedReal,
         messages: await Promise.all(
           messages
             .slice(skip, Math.min(skip + limit, messages.length))

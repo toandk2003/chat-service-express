@@ -81,10 +81,10 @@ const findChatBot = async (req, res) => {
     }
 
     req.params.id = ourConversation._id.toString();
-    const response = await getDetailConversationById(req, res);
-    response.data.isNewCreated = isNewCreated;
+    const response = await getDetailConversationById(req, res, isNewCreated);
+    // response.data.isNewCreated = isNewCreated;
 
-    return response;
+    // return response;
   } catch (error) {
     console.error(error);
     res.json({

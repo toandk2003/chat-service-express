@@ -11,12 +11,12 @@ const addMemberToGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
       console.log("\nstart-create-group\n"); // In ra console server
-      const { memberIds } = req.body;
+      const { memberEmails } = req.body;
       const { id } = req.params;
       const conversationId = new mongoose.Types.ObjectId(id);
 
-      if (!memberIds.length) {
-        throw new Error("memberIds must be array");
+      if (!memberEmails.length) {
+        throw new Error("memberEmails must be array");
       }
 
       //TODO remove toLowerCase
@@ -27,10 +27,10 @@ const addMemberToGroup = async (req, res) => {
       const userId = user._id;
 
       const users = await Promise.all(
-        memberIds.map(async (memberId) => {
-          const res = await User.findById(
-            new mongoose.Types.ObjectId(memberId)
-          );
+        memberEmails.map(async (email) => {
+          const res = await User.findOne({
+            email,
+          });
 
           if (!res) throw new Error("USER NOT FOUND WITH ID: " + memberId);
 
@@ -54,12 +54,15 @@ const addMemberToGroup = async (req, res) => {
         );
       }
 
-      if (ourConversation.currentMember + memberIds > ourConversation.maxMember)
+      if (
+        ourConversation.currentMember + memberEmails >
+        ourConversation.maxMember
+      )
         throw new Error(
           "CONVERSATION IS FULL WITH " + ourConversation.maxMember + " members"
         );
 
-      ourConversation.currentMember += memberIds.length;
+      ourConversation.currentMember += memberEmails.length;
 
       const membersToAdd = users.map((user) => {
         return {
