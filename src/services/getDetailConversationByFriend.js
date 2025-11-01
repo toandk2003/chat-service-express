@@ -89,6 +89,7 @@ const getDetailConversationByFriend = async (req, res) => {
         conversation: {
           _id: ourConversation._id,
           name: myConversation.view.name,
+          status: myConversation.status,
           type: ourConversation.type,
           createdAt: ourConversation.createdAt,
           updatedAt: ourConversation.updatedAt,

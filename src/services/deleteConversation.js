@@ -35,6 +35,7 @@ const deleteConversation = async (req, res) => {
         conversation: {
           conversation: {
             _id: ourConversation._id,
+            status: myConversation.status,
             name: myConversation.view.name,
             type: ourConversation.type,
             createdAt: ourConversation.createdAt,

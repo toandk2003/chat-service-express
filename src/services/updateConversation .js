@@ -47,6 +47,7 @@ const updateConversation = async (req, res) => {
       data: {
         conversation: {
           _id: ourConversation._id,
+          status: myConversation.status,
           settings: {
             _id: ourConversation._id,
             userId: user._id,
