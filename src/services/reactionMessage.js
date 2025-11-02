@@ -1,7 +1,7 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
-const Conversation = require("../models/Conversation");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
+// const Conversation = require("../models/Conversation");
+// const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
@@ -21,7 +21,7 @@ const reactionMessage = async (req, res) => {
       User.findOne({ email, status: "ACTIVE" }),
       Message.findById(messageId),
     ]);
-    
+
     console.log("user: ", user);
     const userId = user._id;
 
@@ -50,6 +50,15 @@ const reactionMessage = async (req, res) => {
       status: 200,
       message: "Reaction message successfully",
       data: { ...message._doc },
+      data: {
+        reactBy: {
+          messageId: messageId,
+          userId,
+          type,
+          createdAt: message.reactionAt,
+          updatedAt: message.reactionAt,
+        },
+      },
     });
   } catch (error) {
     console.error(error);
