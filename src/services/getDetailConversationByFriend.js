@@ -91,6 +91,8 @@ const getDetailConversationByFriend = async (req, res) => {
           name: myConversation.view.name,
           status: myConversation.status,
           type: ourConversation.type,
+          currentMember: ourConversation.currentMember,
+          maxMember: ourConversation.maxMember,
           createdAt: ourConversation.createdAt,
           updatedAt: ourConversation.updatedAt,
           __v: myConversation.__v,
