@@ -32,7 +32,10 @@ const deleteConversation = async (req, res) => {
         myConversation.skipUntilOffset = new mongoose.Types.ObjectId();
 
         await ourConversation.save();
-        if (ourConversation.type === "group") {
+        if (
+          ourConversation.type === "group" &&
+          ourConversation.leaderId.equals(userId)
+        ) {
           await Promise.all(
             ourConversation.participants.map(async (participant) => {
               const user = await User.findById(participant.userId);
