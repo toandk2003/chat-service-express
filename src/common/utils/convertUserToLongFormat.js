@@ -12,6 +12,14 @@ const convertUserToLongFormat = async (userId) => {
       fullName: sender.fullName,
       email: sender.email,
       profilePic: await genPresignURL(sender.avatar),
+      learningLanguage: {
+        id: sender.learningLanguageId,
+        name: sender.learningLanguageName,
+      },
+      nativeLanguage: {
+        id: sender.nativeLanguageId,
+        name: sender.nativeLanguageName,
+      },
     },
   };
 };
