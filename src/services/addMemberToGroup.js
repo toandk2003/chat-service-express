@@ -150,9 +150,9 @@ const addMemberToGroup = async (req, res) => {
           isNewCreated: false,
           messages: [],
           users: await Promise.all(
-            ourConversation.participants.map(async (participant) => {
-              const res = await convertUserToLongFormat(participant.userId);
-              res.isKeyMember = participant.userId.equals(userId);
+            users.map(async (user) => {
+              const res = await convertUserToLongFormat(user._id);
+              res.isKeyMember = false;
               return res;
             })
           ),
