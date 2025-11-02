@@ -69,17 +69,25 @@ const addMemberToGroup = async (req, res) => {
           userId: user._id,
           view: {
             name: myConversation.view.name,
-            avatar: users.slice(0, 3).map((user) => {
-              return {
-                userId: user._id,
-                value: user.avatar,
-              };
-            }),
             bucket: user.bucket,
           },
         };
       });
       ourConversation.participants.push(...membersToAdd);
+      
+      const members = await Promise.all(
+        ourConversation.participants.map(
+          async (participant) => await User.findById(participant.userId)
+        )
+      );
+      ourConversation.participants.forEach((participant) => {
+        participant.view.avatar = members.slice(0, 3).map((user) => {
+          return {
+            userId: user._id,
+            value: user.avatar,
+          };
+        });
+      });
 
       const skipUntilOffset = myConversation.skipUntilOffset;
       let messages = [];
@@ -110,7 +118,6 @@ const addMemberToGroup = async (req, res) => {
           await user.save({ session });
         })
       );
-      console.log("dddd: ", "ourConversation.currentMember");
       return res.json({
         success: true,
         status: 200,

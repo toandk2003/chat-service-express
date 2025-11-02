@@ -47,6 +47,20 @@ const leaveGroup = async (req, res) => {
         ourConversation.leaderId = newKeyMemberId;
       }
 
+      const members = await Promise.all(
+        ourConversation.participants.map(
+          async (participant) => await User.findById(participant.userId)
+        )
+      );
+      ourConversation.participants.forEach((participant) => {
+        participant.view.avatar = members.slice(0, 3).map((user) => {
+          return {
+            userId: user._id,
+            value: user.avatar,
+          };
+        });
+      });
+
       const skipUntilOffset = myConversation.skipUntilOffset;
       let messages = [];
 
@@ -68,7 +82,6 @@ const leaveGroup = async (req, res) => {
 
       await ourConversation.save({ session });
 
-      user.conversations.push({ _id: ourConversation._id });
       user.conversations = user.conversations.filter(
         (conversation) => !conversation._id.equals(ourConversation._id)
       );

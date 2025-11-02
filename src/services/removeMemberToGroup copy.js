@@ -68,6 +68,20 @@ const removeMemberToGroup = async (req, res) => {
         (participant) => !participant.userId.equals(userMember._id)
       );
 
+      const members = await Promise.all(
+        ourConversation.participants.map(
+          async (participant) => await User.findById(participant.userId)
+        )
+      );
+      ourConversation.participants.forEach((participant) => {
+        participant.view.avatar = members.slice(0, 3).map((user) => {
+          return {
+            userId: user._id,
+            value: user.avatar,
+          };
+        });
+      });
+
       const skipUntilOffset = myConversation.skipUntilOffset;
       let messages = [];
 
@@ -89,7 +103,6 @@ const removeMemberToGroup = async (req, res) => {
 
       await ourConversation.save({ session });
 
-      userMember.conversations.push({ _id: ourConversation._id });
       userMember.conversations = userMember.conversations.filter(
         (conversation) => !conversation._id.equals(ourConversation._id)
       );
