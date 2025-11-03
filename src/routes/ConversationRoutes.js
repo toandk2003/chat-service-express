@@ -7,6 +7,7 @@ const getListAttachmentOfConversation = require("../services/getListAttachmentOf
 const updateConversation = require("../services/updateConversation ");
 const updateStatusSeenLastMessage = require("../services/updateStatusSeenLastMessage");
 const findChatBot = require("../services/findChatBot");
+const genTokenBot = require("../services/genTokenBot");
 
 const conversationRoutes = express.Router();
 
@@ -19,6 +20,7 @@ conversationRoutes.get(
 
 conversationRoutes.get("/conversations", getListConversation);
 conversationRoutes.get("/conversations/findChatBot", findChatBot);
+conversationRoutes.post("/conversations/genTokenBot", genTokenBot);
 conversationRoutes.get("/conversations/:id", getDetailConversationById);
 conversationRoutes.delete("/conversations/:id", deleteConversation);
 conversationRoutes.put("/conversations/:conversationId", updateConversation);
