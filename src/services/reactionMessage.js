@@ -49,7 +49,6 @@ const reactionMessage = async (req, res) => {
       success: true,
       status: 200,
       message: "Reaction message successfully",
-      data: { ...message._doc },
       data: {
         reactBy: {
           messageId: messageId,
