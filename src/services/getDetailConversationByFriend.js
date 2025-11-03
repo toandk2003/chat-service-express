@@ -121,6 +121,7 @@ const getDetailConversationByFriend = async (req, res) => {
             .map(async (message) => {
               return await convertMessageToLongFormat(message);
             })
+            .reverse()
         ),
         users: await Promise.all(
           ourConversation.participants.map(async (participant) => {
