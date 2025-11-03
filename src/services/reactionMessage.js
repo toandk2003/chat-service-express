@@ -55,8 +55,8 @@ const reactionMessage = async (req, res) => {
           messageId: messageId,
           userId,
           type,
-          createdAt: message.reactionAt,
-          updatedAt: message.reactionAt,
+          createdAt: message._doc.reactionAt,
+          updatedAt: message._doc.reactionAt,
         },
       },
     });
