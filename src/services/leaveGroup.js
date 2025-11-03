@@ -31,11 +31,11 @@ const leaveGroup = async (req, res) => {
       if (!ourConversation || !myConversation)
         throw new Error("CONVERSATION NOT FOUND WITH ID: " + conversationId);
 
-      if (!ourConversation.leaderId.equals(userId)) {
-        throw new Error(
-          "YOU ARE NOT LEADER OF CONVERSATION WITH ID: " + conversationId
-        );
-      }
+      // if (!ourConversation.leaderId.equals(userId)) {
+      //   throw new Error(
+      //     "YOU ARE NOT LEADER OF CONVERSATION WITH ID: " + conversationId
+      //   );
+      // }
 
       ourConversation.currentMember -= 1;
 

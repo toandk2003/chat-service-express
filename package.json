@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "TZ=Asia/Ho_Chi_Minh node server.js",
-    "stream": "TZ=Asia/Ho_Chi_Minh node stream.js",
+    "start": "node server.js",
+    "stream": "node stream.js",
     "dev": "nodemon server.js"
   },
   "keywords": [],
