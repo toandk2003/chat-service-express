@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const Conversation = require("../../models/Conversation");
 const { Message } = require("../../models/Message");
 const convertMessageToLongFormat = require("../../common/utils/convertMessageToLongFormat");
+const { User } = require("../../models/User");
 const sendMessageHandler = async (socket, socketEventBus) => {
   // Lắng nghe sự kiện 'send_message' từ client
   socket.on("send_message", async (message) => {
@@ -13,7 +14,12 @@ const sendMessageHandler = async (socket, socketEventBus) => {
     try {
       console.log("currentUser: ", JSON.stringify(socket.currentUser, null, 2));
 
-      const user = socket.currentUser.user;
+      let user = socket.currentUser.user;
+      
+      if (data.isChatBot) {
+        user = await User.findOne({ email: "ChatBot@gmail.com" });
+      }
+
       const userId = new mongoose.Types.ObjectId(user._id);
 
       const conversationId = new mongoose.Types.ObjectId(data.conversationId);
