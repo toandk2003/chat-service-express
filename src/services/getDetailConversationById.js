@@ -117,7 +117,7 @@ const getDetailConversationById = async (req, res, isNewCreatedReal) => {
         ),
         unSeenMessageQuantity: myConversation.unreadMessageNums,
         currentMessagePage: 1, // để là 1 cho Long
-        totalMessagePageQuantity: 1,
+        totalMessagePageQuantity: +Math.ceil(messages.length / pageSize),
         pagination: {
           currentPage: +currentPage,
           pageSize: +pageSize,
