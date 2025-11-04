@@ -1,5 +1,7 @@
 const { User } = require("../../models/User");
 const genPresignURL = require("../../services/genPresignURL");
+const { REACTION } = require("../../models/Message");
+
 const convertMessageToLongFormat = async (message) => {
   if (!message) return null;
 
@@ -10,6 +12,57 @@ const convertMessageToLongFormat = async (message) => {
   if (!sender) throw new Error("NOT FOUND SENDER WITH ID: ", message.senderId);
 
   const [images, videos, files] = attachments;
+
+  const like = [],
+    dislike = [],
+    heart = [];
+
+  const senderReact = {
+    messageId: message._id,
+    userId: message.senderId,
+    createdAt: message.reactedAt,
+    updatedAt: message.reactedAt,
+  };
+
+  let isILike = 0;
+  let isIDislike = 0;
+  let isIHeart = 0;
+
+  if (message.reaction === REACTION.LIKE) {
+    senderReact.type = "like";
+    like.push(senderReact);
+    isILike = 1;
+  } else if (message.reaction === REACTION.DISLIKE) {
+    senderReact.type = "dislike";
+    dislike.push(senderReact);
+    isIDislike = 1;
+  } else if (message.reaction === REACTION.TYM) {
+    senderReact.type = "heart";
+    heart.push(senderReact);
+    isIHeart = 1;
+  }
+
+  message.recipients.forEach((recipient) => {
+    const receiveReact = {
+      messageId: message._id,
+      userId: recipient.userId,
+      createdAt: recipient.reactedAt,
+      updatedAt: recipient.reactedAt,
+    };
+    if (recipient.reaction === REACTION.LIKE) {
+      receiveReact.type = "like";
+      like.push(receiveReact);
+      isILike = 1;
+    } else if (recipient.reaction === REACTION.DISLIKE) {
+      receiveReact.type = "dislike";
+      dislike.push(receiveReact);
+      isIDislike = 1;
+    } else if (recipient.reaction === REACTION.TYM) {
+      receiveReact.type = "heart";
+      heart.push(receiveReact);
+      isIHeart = 1;
+    }
+  });
 
   return {
     sender: {
@@ -30,6 +83,19 @@ const convertMessageToLongFormat = async (message) => {
         images,
         videos,
         files,
+      },
+    },
+    reactions: {
+      // 100 % data nay, khong can query
+      total: {
+        like,
+        dislike,
+        heart,
+      },
+      my: {
+        like: isILike,
+        dislike: isIDislike,
+        heart: isIHeart,
       },
     },
   };

@@ -30,7 +30,7 @@ const reactionMessage = async (req, res) => {
     if (userId.equals(senderId)) {
       if (message.reaction === reaction) message.reaction = null;
       else message.reaction = reaction;
-      message.reactionAt = new Date();
+      message.reactedAt = new Date();
     }
 
     // not sender
@@ -40,7 +40,7 @@ const reactionMessage = async (req, res) => {
       );
       if (member.reaction === reaction) member.reaction = null;
       else member.reaction = reaction;
-      member.reactionAt = new Date();
+      member.reactedAt = new Date();
     }
 
     await message.save();
@@ -54,8 +54,8 @@ const reactionMessage = async (req, res) => {
           messageId: messageId,
           userId,
           type,
-          createdAt: message.reactionAt,
-          updatedAt: message.reactionAt,
+          createdAt: message.reactedAt,
+          updatedAt: message.reactedAt,
         },
       },
     });
