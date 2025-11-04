@@ -15,7 +15,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       console.log("currentUser: ", JSON.stringify(socket.currentUser, null, 2));
 
       let user = socket.currentUser.user;
-      
+
       if (data.isChatBot) {
         user = await User.findOne({ email: "ChatBot@gmail.com" });
       }
@@ -115,7 +115,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       socket.emit("send_message_response", {
         success: false,
         status: 400,
-        message: "Send message successfully because messageId is existed.",
+        message: "Send message fail because messageId is existed.",
         messageId: data.messageId,
       });
     }
