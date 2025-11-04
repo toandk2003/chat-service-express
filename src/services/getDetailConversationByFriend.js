@@ -59,9 +59,9 @@ const getDetailConversationByFriend = async (req, res) => {
     console.log("messages: ", messages);
 
     //update lastReadOffset
-    if (messages.length > 0) {
-      myConversation.lastReadOffset = messages[0]._id;
-    }
+    // if (messages.length > 0) {
+    //   myConversation.lastReadOffset = messages[0]._id;
+    // }
     let isNewCreated = false;
 
     if (myConversation.status === "invisible") {

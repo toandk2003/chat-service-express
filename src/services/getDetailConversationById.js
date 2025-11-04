@@ -47,9 +47,9 @@ const getDetailConversationById = async (req, res, isNewCreatedReal) => {
     console.log("messages: ", messages);
 
     //update lastReadOffset
-    if (messages.length > 0) {
-      myConversation.lastReadOffset = messages[0]._id;
-    }
+    // if (messages.length > 0) {
+    //   myConversation.lastReadOffset = messages[0]._id;
+    // }
     // console.log("ourConversation: ", JSON.stringify(ourConversation, null, 2));
     // console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
 
