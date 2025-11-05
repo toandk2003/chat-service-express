@@ -28,6 +28,7 @@ const updateStatusSeenLastMessage = async (req, res) => {
     console.log("myConversation: ", myConversation);
 
     myConversation.lastReadOffset = lastReadOffset;
+    myConversation.unreadMessageNums = 0;
 
     await ourConversation.save();
 
