@@ -37,6 +37,7 @@ const getListConversation = async (req, res) => {
             participant.userId.equals(userId)
           ),
           _id: conversationsOfEveryone[index]._id,
+          type: conversationsOfEveryone[index].type,
         };
       })
       .filter((myConversation) => {
@@ -102,7 +103,7 @@ const getListConversation = async (req, res) => {
         conversation: {
           id: conversation._id,
           name: conversation.view.name,
-          type: conversationsOfEveryone[index].type,
+          type: conversation.type,
           lastMessage: await convertMessageToLongFormat(lastMessage),
           createdAt: conversation.createdAt,
           updatedAt: conversation.updatedAt,
