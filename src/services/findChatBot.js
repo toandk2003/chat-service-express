@@ -14,9 +14,7 @@ const findChatBot = async (req, res) => {
 
     const userId = user._id;
 
-    const [ourConversation, myConversation] = await getMyConversationByLeaderId(
-      userId
-    );
+    let ourConversation = await getMyConversationByLeaderId(userId);
 
     let isNewCreated = false;
 
@@ -79,6 +77,9 @@ const findChatBot = async (req, res) => {
         ourConversation = conversation;
       });
     } else {
+      const myConversation = ourConversation.participants.find((participant) =>
+        participant.userId.equals(userId)
+      );
       if (myConversation.status === "invisible") {
         myConversation.status = "initial";
         isNewCreated = true;
