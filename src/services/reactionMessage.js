@@ -6,6 +6,7 @@ const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
 const mongoose = require("mongoose");
+const Conversation = require("../models/Conversation");
 
 const reactionMessage = async (req, res) => {
   try {
@@ -53,6 +54,7 @@ const reactionMessage = async (req, res) => {
         reactBy: {
           messageId: messageId,
           userId,
+          conversationId: message.conversationId,
           type,
           createdAt: message.reactedAt,
           updatedAt: message.reactedAt,
