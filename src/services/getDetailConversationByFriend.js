@@ -5,6 +5,7 @@ const {
 } = require("./getMyConversation");
 const convertMessageToLongFormat = require("../common/utils/convertMessageToLongFormat");
 const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
+const MAX_OBJECT_ID = require("../common/constant/maxObjectIdConstant");
 
 const getDetailConversationByFriend = async (req, res) => {
   try {
@@ -12,9 +13,7 @@ const getDetailConversationByFriend = async (req, res) => {
     const { partnerEmail } = req.query;
     console.log("partnerEmail is: ", partnerEmail);
 
-    const { pageSize, currentPage } = req.query;
-    const limit = +pageSize;
-    const skip = +currentPage * +limit;
+    const { pageSize, lastMessageId } = req.query;
 
     const email = req.currentUser.email;
     console.log("email: " + email);
@@ -44,17 +43,19 @@ const getDetailConversationByFriend = async (req, res) => {
     const conversationId = ourConversation._id;
     console.log("conversationId is : " + conversationId);
 
-    const skipUntilOffset = myConversation.skipUntilOffset;
+    const skipUntilOffset = lastMessageId
+      ? new mongoose.Types.ObjectId(lastMessageId)
+      : MAX_OBJECT_ID;
     let messages = [];
 
     if (myConversation.status === "running") {
       messages = await Message.find({
         _id: {
-          $gt: skipUntilOffset,
+          $lt: skipUntilOffset,
         },
         conversationId,
         status: "CONFIRMED",
-      }).sort({ createdAt: -1 }); // Sắp xếp giảm dần theo thời gian tạo
+      }); // Sắp xếp giảm dần theo thời gian tạo
     }
     console.log("messages: ", messages);
 
@@ -117,7 +118,7 @@ const getDetailConversationByFriend = async (req, res) => {
         },
         messages: await Promise.all(
           messages
-            .slice(skip, Math.min(skip + limit, messages.length))
+            .slice(0, Math.min(0 + pageSize, messages.length))
             .map(async (message) => {
               return await convertMessageToLongFormat(message);
             })
@@ -131,11 +132,13 @@ const getDetailConversationByFriend = async (req, res) => {
           })
         ),
         isNewCreated,
+        unSeenMessageQuantity: myConversation.unreadMessageNums,
+        currentMessagePage: 1, // để là 1 cho Long
+        totalMessagePageQuantity: +Math.ceil(messages.length / pageSize),
         pagination: {
-          currentPage: +currentPage,
           pageSize: +pageSize,
-          totalItems: +messages.length,
-          totalPages: +Math.ceil(messages.length / pageSize),
+          remainMessage:
+            messages.length - pageSize > 0 ? messages.length - pageSize : 0,
         },
       },
     });

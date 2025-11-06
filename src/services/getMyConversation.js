@@ -75,16 +75,16 @@ const getMyConversationByUserIdAndPartnerId = async (userId, partnerId) => {
       status: "active", // Only find active conversations
     });
 
-    const myConversation = ourConversation.participants.find((participant) =>
-      participant.userId.equals(userId)
-    );
-    if (!ourConversation || !myConversation)
+    if (!ourConversation)
       throw new Error(
         "NO EXISTS CONVERSATION WITH USERID AND partnerId = " +
           userId +
           ", " +
           partnerId
       );
+    const myConversation = ourConversation.participants.find((participant) =>
+      participant.userId.equals(userId)
+    );
     console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
     return [ourConversation, myConversation];
   } catch (error) {
