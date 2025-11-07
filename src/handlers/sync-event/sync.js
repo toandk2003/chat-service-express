@@ -2,7 +2,7 @@ const syncConversation = require("./syncConversation");
 const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
 const syncSendMessage = require("./syncSendMessage");
-const handleSendMessageToReceiver = require("../socket-event-bus/handleSendMessageToReceiver");
+const syncNoti = require("./syncNoti");
 
 const sync = async (message) => {
   try {
@@ -27,6 +27,10 @@ const sync = async (message) => {
 
       case "TEST":
         console.log("WOWWWWWWWW____TESTTTTTTT: ", data);
+        break;
+
+      case "NOTI":
+        await syncNoti(data);
         break;
 
       default:

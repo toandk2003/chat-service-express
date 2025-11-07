@@ -5,88 +5,82 @@ const BaseSchema = require("./base/BaseSchema.js");
 const STATUS = Object.freeze({
   SEEN: "SEEN",
   NOT_SEEN: "NOT_SEEN",
-  DELETED: "DELETED"
+  DELETED: "DELETED",
 });
 
 const SENDER_TYPE = Object.freeze({
-  SYSTEM: "SYSTEM"
+  SYSTEM: "SYSTEM",
 });
 
 const REFERENCE_TYPE = Object.freeze({
-  USER: "USER"
+  USER: "USER",
 });
 
 const RECEIVER_TYPE = Object.freeze({
   USER: "USER",
-  GROUP: "GROUP"
+  GROUP: "GROUP",
 });
 
 const TYPE = Object.freeze({
-  ACCEPT_FRIEND_REQUEST: "ACCEPT_FRIEND_REQUEST"
+  ACCEPT_FRIEND_REQUEST: "ACCEPT_FRIEND_REQUEST",
 });
 
 const NotiSchema = new BaseSchema(
   {
     content: {
       type: String,
-      required: true
+      required: true,
     },
-    senderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "users"
+    senderEmail: {
+      type: String,
+      required: true,
     },
     senderType: {
       type: String,
       enum: Object.values(SENDER_TYPE),
-      default: SENDER_TYPE.SYSTEM
+      default: SENDER_TYPE.SYSTEM,
     },
-    receiverId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "users"
+    receiverEmail: {
+      type: String,
     },
     receiverType: {
       type: String,
       enum: Object.values(RECEIVER_TYPE),
-      required: true
+      required: true,
     },
     referenceType: {
       type: String,
-      enum: Object.values(REFERENCE_TYPE)
+      enum: Object.values(REFERENCE_TYPE),
     },
-    referenceId: {
-      type: mongoose.Schema.Types.ObjectId
+    referenceEmail: {
+      type: String,
     },
     status: {
       type: String,
       enum: Object.values(STATUS),
       default: STATUS.NOT_SEEN,
-      required: true
+      required: true,
     },
     type: {
       type: String,
       enum: Object.values(TYPE),
-      required: true
+      required: true,
     },
     seenAt: {
       type: Date,
-      default: null
+      default: null,
     },
     deletedAt: {
       type: Date,
-      default: null
-    },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "users",
-      required: true
+      default: null,
     },
     deleted: {
       type: Number,
-      default: 0
-    }
+      default: 0,
+    },
   },
   {
-    collection: "notifications"
+    collection: "notifications",
   }
 );
 
@@ -103,5 +97,5 @@ module.exports = {
   SENDER_TYPE,
   RECEIVER_TYPE,
   REFERENCE_TYPE,
-  TYPE
+  TYPE,
 };
