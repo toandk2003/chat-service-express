@@ -103,11 +103,10 @@ const getDetailConversationById = async (req, res, isNewCreatedReal) => {
             : isNewCreatedReal,
         messages: await Promise.all(
           messages
-            .slice(0, Math.min(0 + pageSize, messages.length))
+            .slice(Math.max(0, messages.length - pageSize), messages.length)
             .map(async (message) => {
               return await convertMessageToLongFormat(message);
             })
-            .reverse()
         ),
         users: await Promise.all(
           ourConversation.participants.map(async (participant) => {
