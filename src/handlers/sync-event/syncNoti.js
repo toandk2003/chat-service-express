@@ -1,11 +1,8 @@
-const mongoose = require("mongoose");
-
+const Noti = require("../../models/Noti");
 const syncNoti = async (message) => {
   console.log("syncing NOTI.....");
   console.log("message: " + JSON.stringify(message, null, 2));
-
-  const messageType = message.type;
-  console.log(messageType);
+  await Noti.create(message);
 };
 
 module.exports = syncNoti;

@@ -84,11 +84,6 @@ const NotiSchema = new BaseSchema(
   }
 );
 
-// Tạo index để tìm kiếm hiệu quả
-NotiSchema.index({ receiverId: 1, status: 1 });
-NotiSchema.index({ createdBy: 1 });
-NotiSchema.index({ referenceId: 1 });
-
 const Noti = mongoose.model("notifications", NotiSchema);
 
 module.exports = {
