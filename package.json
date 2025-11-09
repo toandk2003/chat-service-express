@@ -17,6 +17,7 @@
     "@aws-sdk/s3-presigned-post": "^3.893.0",
     "@aws-sdk/s3-request-presigner": "^3.893.0",
     "@socket.io/redis-adapter": "^8.3.0",
+    "axios": "^1.13.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",

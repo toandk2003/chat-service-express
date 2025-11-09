@@ -1,4 +1,4 @@
-const Noti = require("../../models/Noti");
+const { Noti } = require("../../models/Noti");
 const syncNoti = async (message) => {
   console.log("syncing NOTI.....");
   console.log("message: " + JSON.stringify(message, null, 2));

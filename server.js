@@ -16,6 +16,7 @@ const syncConsumer = require("./src/handlers/sync-event");
 const conversationRoutes = require("./src/routes/ConversationRoutes");
 const messageRoutes = require("./src/routes/MessageRoutes");
 const groupRoutes = require("./src/routes/groupRoutes");
+const notiRoutes = require("./src/routes/notiRoutes");
 
 // console.log = function () {};
 
@@ -61,6 +62,7 @@ const initServer = async () => {
     app.use("/", conversationRoutes);
     app.use("/", messageRoutes);
     app.use("/", groupRoutes);
+    app.use("/", notiRoutes);
 
     console.log("✅ Routes set up successfully");
 

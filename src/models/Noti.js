@@ -33,7 +33,7 @@ const NotiSchema = new BaseSchema(
     },
     senderEmail: {
       type: String,
-      required: true,
+      // required: true,
     },
     senderType: {
       type: String,
