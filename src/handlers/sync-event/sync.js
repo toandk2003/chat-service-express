@@ -8,6 +8,7 @@ const handleSendNotiRejectFRForMuti = require("../socket-event-bus/handleSendNot
 const handleSendNotiCancelFRForMuti = require("../socket-event-bus/handleSendNotiCancelFRForMuti");
 const handleSendNotiRemoveFriendForMuti = require("../socket-event-bus/handleSendNotiRemoveFriendForMuti");
 const handleSendNotiAcceptFRForMuti = require("../socket-event-bus/handleSendNotiAcceptFRForMuti");
+const handleSendNotiCreateGroupForMuti = require("../socket-event-bus/handleSendNotiCreateGroupForMuti");
 
 const sync = async (message) => {
   try {
@@ -56,6 +57,10 @@ const sync = async (message) => {
 
       case "ACCEPT_FRIEND_REQUEST":
         await handleSendNotiAcceptFRForMuti(data);
+        break;
+
+      case "CREATE_GROUP":
+        await handleSendNotiCreateGroupForMuti(data);
         break;
 
       default:

@@ -1,10 +1,11 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
 const Conversation = require("../models/Conversation");
-const mongoose = require("mongoose");
 const withTransactionThrow = require("../common/utils/withTransactionThrow");
 const { getMyConversationFromOurConversation } = require("./getMyConversation");
 const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
+const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
+
 const createGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
@@ -92,12 +93,8 @@ const createGroup = async (req, res) => {
       if (messages.length > 0) {
         myConversation.lastReadOffset = messages[0]._id;
       }
-      // console.log("ourConversation: ", JSON.stringify(ourConversation, null, 2));
-      // console.log("myConversation: ", JSON.stringify(myConversation, null, 2));
 
-      // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
-
-      return res.json({
+      const response = {
         success: true,
         status: 200,
         message: "Here is your detail conversation",
@@ -141,6 +138,9 @@ const createGroup = async (req, res) => {
               return res;
             })
           ),
+          unSeenMessageQuantity: 0,
+          currentMessagePage: 1,
+          totalMessagePageQuantity: 1,
           pagination: {
             currentPage: 0,
             pageSize: 10,
@@ -148,7 +148,21 @@ const createGroup = async (req, res) => {
             totalPages: 0,
           },
         },
-      });
+      };
+
+      // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
+      const synchronizePublisher = await SynchronizePublisher.getInstance();
+      // Publish lên Redis Stream
+      const event = {
+        destination: "sync-stream",
+        payload: JSON.stringify({
+          eventType: "CREATE_GROUP",
+          ...response,
+        }),
+      };
+      await synchronizePublisher.publish(event);
+
+      return res.json(response);
     },
     req,
     res
