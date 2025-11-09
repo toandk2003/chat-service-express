@@ -4,6 +4,7 @@ const syncUser = require("./syncUser");
 const syncSendMessage = require("./syncSendMessage");
 const syncNoti = require("./syncNoti");
 const handleSendNotiReceiveFRForMuti = require("../socket-event-bus/handleSendNotiReceiveFRForMuti");
+const handleSendNotiCancelFRForMuti = require("../socket-event-bus/handleSendNotiCancelFRForMuti");
 
 const sync = async (message) => {
   try {
@@ -38,6 +39,9 @@ const sync = async (message) => {
         await handleSendNotiReceiveFRForMuti(data);
         break;
 
+      case "CANCEL_FRIEND_REQUEST":
+        await handleSendNotiCancelFRForMuti(data);
+        break;
       // case "SYNC_CHANGE_STATUS_SEEN":
       //   await syncChangeStatusSeen(data);
       //   break;
