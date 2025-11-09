@@ -3,7 +3,7 @@ const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
 const syncSendMessage = require("./syncSendMessage");
 const syncNoti = require("./syncNoti");
-// const syncChangeStatusSeen = require("./syncChangeStatusSeen");
+const handleSendNotiReceiveFRForMuti = require("../socket-event-bus/handleSendNotiReceiveFRForMuti");
 
 const sync = async (message) => {
   try {
@@ -34,12 +34,16 @@ const sync = async (message) => {
         await syncNoti(data);
         break;
 
+      case "RECEIVE_FRIEND_REQUEST":
+        await handleSendNotiReceiveFRForMuti(data);
+        break;
+
       // case "SYNC_CHANGE_STATUS_SEEN":
       //   await syncChangeStatusSeen(data);
       //   break;
 
       default:
-        throw new Error("NOT FOUND CURRENT EVENT TYPE: " + eventType);
+        console.log("NOT FOUND CURRENT EVENT TYPE: " + eventType);
     }
 
     console.log("📥 sync successfully:");
