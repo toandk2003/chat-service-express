@@ -10,14 +10,14 @@ const handleSendNotiReceiveFRForMuti = async (message) => {
   console.log("senderEmail: ", senderEmail);
   console.log("receiverEmail: ", receiverEmail);
 
-  const [sender, receiver] = await Promise.all(
+  const [sender, receiver] = await Promise.all([
     User.findOne({
       email: senderEmail,
     }),
     User.findOne({
       email: receiverEmail,
-    })
-  );
+    }),
+  ]);
   const senderId = sender._id;
   const receiverId = receiver._id;
   global.io.to(senderId.toString()).emit("receiveFriendRequest", message);
