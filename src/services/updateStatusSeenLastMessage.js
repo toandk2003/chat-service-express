@@ -38,8 +38,6 @@ const updateStatusSeenLastMessage = async (req, res) => {
     myConversation.lastReadOffset = lastReadOffset;
     myConversation.unreadMessageNums -= unreadMessageNums;
 
-    await ourConversation.save();
-
     const socketEventBus = await SocketEventBus.getInstance();
     console.log("✅ Socket Event Bus initialized successfully");
 
