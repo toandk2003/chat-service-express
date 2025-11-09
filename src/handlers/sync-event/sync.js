@@ -7,6 +7,7 @@ const handleSendNotiReceiveFRForMuti = require("../socket-event-bus/handleSendNo
 const handleSendNotiRejectFRForMuti = require("../socket-event-bus/handleSendNotiRejectFRForMuti");
 const handleSendNotiCancelFRForMuti = require("../socket-event-bus/handleSendNotiCancelFRForMuti");
 const handleSendNotiRemoveFriendForMuti = require("../socket-event-bus/handleSendNotiRemoveFriendForMuti");
+const handleSendNotiAcceptFRForMuti = require("../socket-event-bus/handleSendNotiAcceptFRForMuti");
 
 const sync = async (message) => {
   try {
@@ -51,6 +52,10 @@ const sync = async (message) => {
 
       case "REJECT_FRIEND_REQUEST":
         await handleSendNotiRejectFRForMuti(data);
+        break;
+
+      case "ACCEPT_FRIEND_REQUEST":
+        await handleSendNotiAcceptFRForMuti(data);
         break;
 
       default:
