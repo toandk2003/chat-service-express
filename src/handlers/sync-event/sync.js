@@ -3,6 +3,7 @@ const syncUpdateUser = require("./syncUpdateUser");
 const syncUser = require("./syncUser");
 const syncSendMessage = require("./syncSendMessage");
 const syncNoti = require("./syncNoti");
+// const syncChangeStatusSeen = require("./syncChangeStatusSeen");
 
 const sync = async (message) => {
   try {
@@ -32,6 +33,10 @@ const sync = async (message) => {
       case "NOTI":
         await syncNoti(data);
         break;
+
+      // case "SYNC_CHANGE_STATUS_SEEN":
+      //   await syncChangeStatusSeen(data);
+      //   break;
 
       default:
         throw new Error("NOT FOUND CURRENT EVENT TYPE: " + eventType);

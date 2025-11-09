@@ -111,7 +111,10 @@ const getListConversation = async (req, res) => {
         isNewCreated: false,
         messages: [], // de rong cho Long
         users: await Promise.all(avatarPromises),
-        unSeenMessageQuantity: myConversations[index].unreadMessageNums,
+        unSeenMessageQuantity: Math.max(
+          0,
+          myConversations[index].unreadMessageNums
+        ),
         currentMessagePage: 1, // để là 1 cho Long
         totalMessagePageQuantity: 1,
         lastUpdate,

@@ -1,7 +1,5 @@
 const { User } = require("../models/User");
 const { Message } = require("../models/Message");
-const Conversation = require("../models/Conversation");
-const createPaginateResponse = require("../common/utils/createPaginateResponse");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
@@ -25,10 +23,20 @@ const updateStatusSeenLastMessage = async (req, res) => {
     const [ourConversation, myConversation] =
       await getMyConversationByUserIdAndConversationId(userId, convId);
 
-    console.log("myConversation: ", myConversation);
+    // console.log("xxxxxxx: ", myConversation.lastReadOffset);
+
+    const unreadMessageNums = await Message.countDocuments({
+      _id: {
+        $gt: myConversation.lastReadOffset,
+        $lte: lastReadOffset,
+      },
+      conversationId,
+      status: "CONFIRMED",
+    });
+    console.log("xinchooo: ", unreadMessageNums);
 
     myConversation.lastReadOffset = lastReadOffset;
-    myConversation.unreadMessageNums = 0;
+    myConversation.unreadMessageNums -= unreadMessageNums;
 
     await ourConversation.save();
 

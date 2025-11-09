@@ -195,6 +195,7 @@ class SyncConsumer {
       console.log(`Acknowledged message: ${messageId}`);
     } catch (error) {
       console.error(`Failed to acknowledge message ${messageId}:`, error);
+      throw error;
     }
   }
 }
