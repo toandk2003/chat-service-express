@@ -41,7 +41,6 @@ const getNotification = async (req, res) => {
           status: noti.status,
           type: noti.type,
           createdAt: noti.createdAt,
-          status: noti.status,
           seenAt: noti.seenAt,
           userReference,
         };
