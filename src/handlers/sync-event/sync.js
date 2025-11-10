@@ -10,6 +10,7 @@ const handleSendNotiRemoveFriendForMuti = require("../socket-event-bus/handleSen
 const handleSendNotiAcceptFRForMuti = require("../socket-event-bus/handleSendNotiAcceptFRForMuti");
 const handleSendNotiCreateGroupForMuti = require("../socket-event-bus/handleSendNotiCreateGroupForMuti");
 const handleSendNotiAddMemberGroupForMuti = require("../socket-event-bus/handleSendNotiAddMemberGroupForMuti");
+const handleSendNotiDeleteMemberGroupForMuti = require("../socket-event-bus/handleSendNotiDeleteMemberGroupForMuti");
 
 const sync = async (message) => {
   try {
@@ -68,6 +69,9 @@ const sync = async (message) => {
         await handleSendNotiAddMemberGroupForMuti(data);
         break;
 
+      case "DELETE_MEMBER_FROM_GROUP":
+        await handleSendNotiDeleteMemberGroupForMuti(data);
+        break;
       default:
         console.log("NOT FOUND CURRENT EVENT TYPE: " + eventType);
     }

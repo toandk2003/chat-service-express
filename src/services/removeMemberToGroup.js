@@ -6,11 +6,12 @@ const withTransactionThrow = require("../common/utils/withTransactionThrow");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
-// const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
+const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
+
 const removeMemberToGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
-      console.log("\nstart-create-group\n"); // In ra console server
+      console.log("\nstart-delete member -group\n"); // In ra console server
       const { memberEmail } = req.body;
       const { id } = req.params;
       const conversationId = new mongoose.Types.ObjectId(id);
@@ -49,21 +50,6 @@ const removeMemberToGroup = async (req, res) => {
 
       ourConversation.currentMember -= 1;
 
-      // const membersToAdd = users.map((user) => {
-      //   return {
-      //     userId: user._id,
-      //     view: {
-      //       name: myConversation.view.name,
-      //       avatar: users.slice(0, 3).map((user) => {
-      //         return {
-      //           userId: user._id,
-      //           value: user.avatar,
-      //         };
-      //       }),
-      //       bucket: user.bucket,
-      //     },
-      //   };
-      // });
       ourConversation.participants = ourConversation.participants.filter(
         (participant) => !participant.userId.equals(userMember._id)
       );
@@ -109,7 +95,7 @@ const removeMemberToGroup = async (req, res) => {
 
       await userMember.save({ session });
 
-      return res.json({
+      const response = {
         success: true,
         status: 200,
         message: "Here is your detail conversation",
@@ -156,8 +142,26 @@ const removeMemberToGroup = async (req, res) => {
             totalItems: 0,
             totalPages: 0,
           },
+          removedUserId: userMember._id,
+          oldMemberIds: members
+            .filter((member) => !member._id.equals(userMember._id))
+            .map((member) => member._id),
         },
-      });
+      };
+
+      // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
+      const synchronizePublisher = await SynchronizePublisher.getInstance();
+      // Publish lên Redis Stream
+      const event = {
+        destination: "sync-stream",
+        payload: JSON.stringify({
+          eventType: "DELETE_MEMBER_FROM_GROUP",
+          ...response,
+        }),
+      };
+      await synchronizePublisher.publish(event);
+
+      return res.json(response);
     },
     req,
     res
