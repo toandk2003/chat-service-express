@@ -7,6 +7,8 @@ const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
 const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
+const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
+
 const addMemberToGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
@@ -54,6 +56,11 @@ const addMemberToGroup = async (req, res) => {
         );
       }
 
+      const oldMemberIds = ourConversation.participants.map((participant) =>
+        participant.userId.toString()
+      );
+      const newMemberIds = users.map((user) => user._id.toString());
+
       if (
         ourConversation.currentMember + memberEmails.length >
         ourConversation.maxMember
@@ -74,7 +81,7 @@ const addMemberToGroup = async (req, res) => {
         };
       });
       ourConversation.participants.push(...membersToAdd);
-      
+
       const members = await Promise.all(
         ourConversation.participants.map(
           async (participant) => await User.findById(participant.userId)
@@ -118,7 +125,8 @@ const addMemberToGroup = async (req, res) => {
           await user.save({ session });
         })
       );
-      return res.json({
+
+      const response = {
         success: true,
         status: 200,
         message: "Here is your detail conversation",
@@ -169,8 +177,24 @@ const addMemberToGroup = async (req, res) => {
             totalItems: 0,
             totalPages: 0,
           },
+          oldMemberIds,
+          newMemberIds,
         },
-      });
+      };
+
+      // Khởi tạo SocketEventBus & emit su kien co nguoi doc tin nhan
+      const synchronizePublisher = await SynchronizePublisher.getInstance();
+      // Publish lên Redis Stream
+      const event = {
+        destination: "sync-stream",
+        payload: JSON.stringify({
+          eventType: "ADD_MEMBER_TO_GROUP",
+          ...response,
+        }),
+      };
+      await synchronizePublisher.publish(event);
+
+      return res.json(response);
     },
     req,
     res

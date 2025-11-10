@@ -1,5 +1,3 @@
-const { User } = require("../../models/User");
-
 const handleSendNotiCreateGroupForMuti = async (message) => {
   console.log("emit createGroup  .....");
   console.log("message: " + JSON.stringify(message, null, 2));
