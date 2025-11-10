@@ -4,6 +4,7 @@ const {
 } = require("./getMyConversation");
 const mongoose = require("mongoose");
 const withTransactionThrow = require("../common/utils/withTransactionThrow");
+const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
 
 const deleteConversation = async (req, res) => {
   return await withTransactionThrow(
@@ -53,8 +54,7 @@ const deleteConversation = async (req, res) => {
           );
           await ourConversation.deleteOne();
         }
-        // // Tạo kết quả phân trang
-        return res.json({
+        const response = {
           success: true,
           status: 200,
           message: "",
@@ -78,9 +78,27 @@ const deleteConversation = async (req, res) => {
                   },
                 };
               }),
+              actionUserId: [userId],
+              remainMemberIds: ourConversation.participants
+                .filter((participant) => !participant.userId.equals(userId))
+                .map((participant) => participant.userId),
             },
           },
-        });
+        };
+
+        const synchronizePublisher = await SynchronizePublisher.getInstance();
+        // Publish lên Redis Stream
+        const event = {
+          destination: "sync-stream",
+          payload: JSON.stringify({
+            eventType: "DELETE_CONVERSATION",
+            ...response,
+          }),
+        };
+        await synchronizePublisher.publish(event);
+
+        // // Tạo kết quả phân trang
+        return res.json(response);
       } catch (error) {
         console.error(error);
         res.json({

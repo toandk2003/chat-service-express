@@ -6,6 +6,8 @@ const withTransactionThrow = require("../common/utils/withTransactionThrow");
 const {
   getMyConversationByUserIdAndConversationId,
 } = require("./getMyConversation");
+const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
+
 // const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
 const leaveGroup = async (req, res) => {
   return await withTransactionThrow(
@@ -88,7 +90,7 @@ const leaveGroup = async (req, res) => {
 
       await user.save({ session });
 
-      return res.json({
+      const response = {
         success: true,
         status: 200,
         message: "Here is your detail conversation",
@@ -135,8 +137,25 @@ const leaveGroup = async (req, res) => {
             totalItems: 0,
             totalPages: 0,
           },
+          userLeaveGroupId: [userId],
+          remainMemberIds: ourConversation.participants.map(
+            (participant) => participant.userId
+          ),
         },
-      });
+      };
+
+      const synchronizePublisher = await SynchronizePublisher.getInstance();
+      // Publish lên Redis Stream
+      const event = {
+        destination: "sync-stream",
+        payload: JSON.stringify({
+          eventType: "LEAVE_GROUP",
+          ...response,
+        }),
+      };
+      await synchronizePublisher.publish(event);
+
+      return res.json(response);
     },
     req,
     res
