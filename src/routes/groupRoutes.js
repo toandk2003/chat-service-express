@@ -1,7 +1,7 @@
 const express = require("express");
 const createGroup = require("../services/createGroup");
 const addMemberToGroup = require("../services/addMemberToGroup");
-const removeMemberToGroup = require("../services/removeMemberToGroup copy");
+const removeMemberToGroup = require("../services/removeMemberToGroup");
 const leaveGroup = require("../services/leaveGroup");
 
 const groupRoutes = express.Router();

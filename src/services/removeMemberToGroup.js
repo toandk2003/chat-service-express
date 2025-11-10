@@ -142,7 +142,7 @@ const removeMemberToGroup = async (req, res) => {
             totalItems: 0,
             totalPages: 0,
           },
-          removedUserId: userMember._id,
+          removedUserId: [userMember._id],
           oldMemberIds: members
             .filter((member) => !member._id.equals(userMember._id))
             .map((member) => member._id),

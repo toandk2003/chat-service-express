@@ -78,11 +78,11 @@ const deleteConversation = async (req, res) => {
                   },
                 };
               }),
-              actionUserId: [userId],
-              remainMemberIds: ourConversation.participants
-                .filter((participant) => !participant.userId.equals(userId))
-                .map((participant) => participant.userId),
             },
+            actionUserId: [userId],
+            remainMemberIds: ourConversation.participants
+              .filter((participant) => !participant.userId.equals(userId))
+              .map((participant) => participant.userId),
           },
         };
 
