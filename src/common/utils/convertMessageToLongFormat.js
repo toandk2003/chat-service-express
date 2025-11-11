@@ -73,6 +73,7 @@ const convertMessageToLongFormat = async (message) => {
     },
     message: {
       _id: message._id,
+      replyForMessgeId: message.replyForMessgeId,
       conversationId: message.conversationId,
       senderId: message.senderId,
       content: message.content,
