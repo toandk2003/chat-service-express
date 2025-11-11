@@ -3,12 +3,13 @@ const socketAuthMiddleware = require("../../middleware/socketAuth");
 const joinRoom = require("../../common/utils/join-room");
 const { createAdapter } = require("@socket.io/redis-adapter");
 const sendMessageHandler = require("./sendMessageHandler");
+const pingOnlineHandler = require("./pingOnlineHandler");
 
 // TOUCH IT WHEN YOU ADD NEW HANDLER
 const HANDLERS = [
   testHandler,
   sendMessageHandler,
-
+  pingOnlineHandler,
   // Thêm vào array này khi có handler mới
 ];
 // const ROOMS = [

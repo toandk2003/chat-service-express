@@ -20,6 +20,13 @@ class SynchronizePublisher {
 
     return synchronizePublisher;
   }
+  async setKey(key, value) {
+    this.client.set(key, value);
+  }
+
+  async getValue(key) {
+    return this.client.get(key);
+  }
 
   /**
    * Push event lên Redis Stream
