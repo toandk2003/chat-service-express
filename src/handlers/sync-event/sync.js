@@ -13,6 +13,7 @@ const handleSendNotiAddMemberGroupForMuti = require("../socket-event-bus/handleS
 const handleSendNotiDeleteMemberGroupForMuti = require("../socket-event-bus/handleSendNotiDeleteMemberGroupForMuti");
 const handleSendNotiLeaveGroupForMuti = require("../socket-event-bus/handleSendNotiLeaveGroupForMuti");
 const handleSendNotiDeleteConversationForMuti = require("../socket-event-bus/handleSendNotiDeleteConversationForMuti");
+const handleTyping = require("../socket-event-bus/handleTyping");
 
 const sync = async (message) => {
   try {
@@ -81,6 +82,10 @@ const sync = async (message) => {
 
       case "DELETE_CONVERSATION":
         await handleSendNotiDeleteConversationForMuti(data);
+        break;
+
+      case "TYPING":
+        await handleTyping(data);
         break;
 
       default:
