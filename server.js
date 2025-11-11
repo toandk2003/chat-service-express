@@ -17,7 +17,7 @@ const conversationRoutes = require("./src/routes/ConversationRoutes");
 const messageRoutes = require("./src/routes/MessageRoutes");
 const groupRoutes = require("./src/routes/groupRoutes");
 const notiRoutes = require("./src/routes/notiRoutes");
-
+const pingOnlineJob = require("./src/job/pingOnlineJob");
 // console.log = function () {};
 
 global.io = socketIo(server, {
@@ -68,6 +68,9 @@ const initServer = async () => {
 
     // Khởi động sync consumer
     (await syncConsumer.getInstance()).startConsuming();
+
+    // ping online job
+    pingOnlineJob();
 
     // Khởi động server HTTP
     const PORT = process.env.PORT;
