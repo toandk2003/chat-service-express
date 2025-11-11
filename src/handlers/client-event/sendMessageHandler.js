@@ -45,6 +45,7 @@ const sendMessageHandler = async (socket, socketEventBus) => {
       if (!message) {
         message = await Message.create({
           _id: new mongoose.Types.ObjectId(data.messageId),
+          replyForMessgeId: new mongoose.Types.ObjectId(data.originalMessageId),
           conversationId,
           senderId: userId,
           recipients: participantIds.map((recipientId) => {

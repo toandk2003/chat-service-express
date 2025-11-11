@@ -220,8 +220,9 @@ class UploadFileService {
         console.log("conversation: ", JSON.stringify(conversation, null, 2));
 
         // get all receiver
-        const participantIds = conversation.participants
-          .map((participant) => participant.userId);
+        const participantIds = conversation.participants.map(
+          (participant) => participant.userId
+        );
 
         // send message to them
         console.log("participantIds: " + participantIds);
@@ -232,6 +233,9 @@ class UploadFileService {
             [
               {
                 _id: new mongoose.Types.ObjectId(body.messageId),
+                replyForMessgeId: new mongoose.Types.ObjectId(
+                  body.originalMessageId
+                ),
                 conversationId: body.conversationId,
                 senderId: user._id,
                 recipients: participantIds.map((recipientId) => {
