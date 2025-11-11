@@ -2,7 +2,7 @@ const SynchronizePublisher = require("../../messageBroker/synchronizePublisher")
 
 const pingOnlineHandler = async (socket, socketEventBus) => {
   // Lắng nghe sự kiện 'send_message' từ client
-  socket.on("ping_online", async (message) => {
+  socket.on("heart_beat", async (message) => {
     console.log("handle ping online event.....");
 
     try {
