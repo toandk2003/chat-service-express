@@ -78,6 +78,10 @@ const NotiSchema = new BaseSchema(
       type: Number,
       default: 0,
     },
+    checkDuplicate: {
+      type: String,
+      unique: true,
+    },
   },
   {
     collection: "notifications",
