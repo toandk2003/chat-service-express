@@ -8,7 +8,6 @@ const {
 } = require("./getMyConversation");
 const SynchronizePublisher = require("../messageBroker/synchronizePublisher");
 
-// const convertUserToLongFormat = require("../common/utils/convertUserToLongFormat");
 const leaveGroup = async (req, res) => {
   return await withTransactionThrow(
     async (session, req, res) => {
@@ -99,6 +98,7 @@ const leaveGroup = async (req, res) => {
             _id: ourConversation._id,
             name: myConversation.view.name,
             status: myConversation.status,
+            leaderId: ourConversation.leaderId,
             type: ourConversation.type,
             currentMember: ourConversation.currentMember,
             maxMember: ourConversation.maxMember,
