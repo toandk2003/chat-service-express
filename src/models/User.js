@@ -113,6 +113,7 @@ const UserSchema = new BaseSchema(
     conversations: [],
     checkDuplicate: {
       type: String,
+      default: () => uuidv4(),
       unique: true,
     },
   },

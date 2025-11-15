@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const BaseSchema = require("./base/BaseSchema.js");
 const MIN_OBJECT_ID = require("../common/constant/minObjectIdConstant");
+const { v4: uuidv4 } = require("uuid");
 
 const ConversationSchema = new BaseSchema(
   {
@@ -78,6 +79,7 @@ const ConversationSchema = new BaseSchema(
     },
     checkDuplicate: {
       type: String,
+      default: () => uuidv4(),
       unique: true,
     },
   },
