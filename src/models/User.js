@@ -111,6 +111,10 @@ const UserSchema = new BaseSchema(
       default: 0,
     },
     conversations: [],
+    checkDuplicate: {
+      type: String,
+      unique: true,
+    },
   },
   {
     collection: "users",
